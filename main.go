@@ -11,9 +11,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"strings"
 	"time"
 
@@ -77,7 +79,12 @@ func main() {
 		}
 		defer f.Close()
 		stat, _ := f.Stat()
-		http.ServeContent(w, r, "login.html", stat.ModTime(), f)
+		buf, err := io.ReadAll(f)
+		if err != nil {
+			http.Error(w, "Failed to read login page", 500)
+			return
+		}
+		http.ServeContent(w, r, "login.html", stat.ModTime(), bytes.NewReader(buf))
 	})
 
 	// Init Auth
