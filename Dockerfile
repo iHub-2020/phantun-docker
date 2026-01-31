@@ -13,35 +13,33 @@ COPY go.mod ./
 COPY . .
 
 # Build the binary
-# Use TARGETARCH to support cross-compilation
 ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o phantun-manager main.go
 
 # Stage 2: Phantun Binaries Downloader
 FROM alpine:latest AS downloader
 
-RUN apk add --no-cache curl tar
+RUN apk add --no-cache curl zip
 
-# Set Phantun version
 ARG PHANTUN_VERSION=0.6.0
 ARG TARGETARCH
 
 WORKDIR /downloads
 # Download correct binary for architecture
+# Naming: phantun_{arch}-unknown-linux-musl.zip
 RUN case "${TARGETARCH}" in \
     "amd64") ARCH="x86_64-unknown-linux-musl" ;; \
     "arm64") ARCH="aarch64-unknown-linux-musl" ;; \
     *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
     esac && \
-    curl -L "https://github.com/dndx/phantun/releases/download/v${PHANTUN_VERSION}/phantun-${ARCH}-v${PHANTUN_VERSION}.tar.gz" -o phantun.tar.gz && \
-    tar -xzf phantun.tar.gz
-
+    curl -L "https://github.com/dndx/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
+    unzip phantun.zip
 
 # Stage 3: Final Runtime Image
 FROM alpine:latest
 
-# Install runtime dependencies: iptables, iproute2 (ip cmd)
-RUN apk add --no-cache iptables ip6tables iproute2 ca-certificates bash
+# Install runtime dependencies including curl for healthcheck
+RUN apk add --no-cache iptables ip6tables iproute2 ca-certificates bash curl
 
 WORKDIR /app
 

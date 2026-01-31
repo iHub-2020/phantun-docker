@@ -1,18 +1,57 @@
+# ------------------------------------------------------------------------------
+# File: docker-compose.yml
+# Description: Phantun Docker Deployment
+# Author: iHub-2020
+# Date: 2026-02-01
+# Version: 1.0.0
+# ------------------------------------------------------------------------------
+
 version: "3"
 services:
   phantun:
     build: .
     image: phantun-docker
     container_name: phantun
-    # Host networking is recommended for Phantun to manage iptables and dynamic ports
-    # without rebuilding the container.
+
+    # --------------------------------------------------------------------------
+    # Network Configuration
+    # Host networking is recommended for Phantun to simplify iptables management
+    # and achieve maximum TUN performance.
+    # --------------------------------------------------------------------------
     network_mode: "host"
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
+
+    # --------------------------------------------------------------------------
+    # Persistence & Configuration
+    # Use environment variables to override defaults.
+    # PHANTUN_CONFIG_DIR defaults to /opt/phantun/
+    # --------------------------------------------------------------------------
     volumes:
-      - ./config:/etc/phantun
+      - ${PHANTUN_CONFIG_DIR:-/opt/phantun/}:/etc/phantun
+
     restart: unless-stopped
+
     environment:
       - PHANTUN_CONFIG=/etc/phantun/config.json
+      # Note: Port and IP binding are managed via config.json (Web UI)
+
+      # --------------------------------------------------------------------------
+      # Healthcheck
+      # Curler to internal API to verify service is up.
+      # --------------------------------------------------------------------------
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "-k", "http://localhost:8080/api/status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+# ------------------------------------------------------------------------------
+# Usage Instructions:
+# 1. Start: docker-compose up -d
+# 2. Enter Container: docker exec -it phantun sh
+# 3. View Logs: docker logs -f phantun
+# ------------------------------------------------------------------------------

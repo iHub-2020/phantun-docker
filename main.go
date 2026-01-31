@@ -54,16 +54,34 @@ func main() {
 	}
 	mux.Handle("/", http.FileServer(http.FS(webFS)))
 
-	// 6. Start HTTP Server
+	// 6. Start HTTP/HTTPS Server
+	certFile := "/etc/phantun/cert.pem"
+	keyFile := "/etc/phantun/key.pem"
+	
+	// Simple check if certs exist
+	useTLS := false
+	if _, err := os.Stat(certFile); err == nil {
+		if _, err := os.Stat(keyFile); err == nil {
+			useTLS = true
+		}
+	}
+
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", *port),
 		Handler: mux,
 	}
 
 	go func() {
-		log.Printf("Phantun Manager listening on :%d", *port)
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
+		if useTLS {
+			log.Printf("Phantun Manager listening on :%d (HTTPS)", *port)
+			if err := server.ListenAndServeTLS(certFile, keyFile); err != http.ErrServerClosed {
+				log.Fatalf("HTTPS server error: %v", err)
+			}
+		} else {
+			log.Printf("Phantun Manager listening on :%d (HTTP)", *port)
+			if err := server.ListenAndServe(); err != http.ErrServerClosed {
+				log.Fatalf("HTTP server error: %v", err)
+			}
 		}
 	}()
 
