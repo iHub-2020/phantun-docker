@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantun Docker Manager</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Optional: Preconnect to fonts if we use CDN, otherwise system fonts are fine -->
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Toast Container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <header>
+            <div class="brand">
+                <span>⚡</span> Phantun Manager
+            </div>
+            <div class="status-indicator">
+                Service: <span id="status-text" class="text-secondary">Unknown</span>
+                <span id="service-status" class="status-dot"></span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="status">Dashboard</button>
+            <button class="tab-btn" data-tab="config">Configuration</button>
+            <button class="tab-btn" data-tab="advanced" style="display:none">Advanced</button>
+        </nav>
+
+        <!-- Status Content -->
+        <div id="status-tab" class="tab-content fade-in">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">System Status</span>
+                    <button class="btn btn-secondary btn-sm" id="restart-btn">Restart Service</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table" id="process-table">
+                        <thead>
+                            <tr>
+                                <th>Alias</th>
+                                <th>Type</th>
+                                <th>PID</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="process-list-body">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Diagnostics (IPTables Rules)</span>
+                </div>
+                <pre id="iptables-output"
+                    style="background:#0f172a; padding:1rem; border-radius:0.5rem; overflow-x:auto; font-family:monospace; color:#ccc; font-size:0.8rem;"></pre>
+            </div>
+        </div>
+
+        <!-- Config Content -->
+        <div id="config-tab" class="tab-content fade-in" style="display: none;">
+            <!-- General Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Global Settings</span>
+                </div>
+                <div class="form-group">
+                    <label>Enable Service</label>
+                    <label class="switch">
+                        <input type="checkbox" id="global-enabled">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Log Level</label>
+                    <select id="log-level">
+                        <option value="info">Info</option>
+                        <option value="debug">Debug</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Clients -->
+            <div class="section-header"
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:1.2rem; font-weight:600;">Client Instances</h3>
+                <button class="btn btn-primary btn-sm" onclick="addClient()">+ Add Client</button>
+            </div>
+            <div id="client-list">
+                <!-- Client Cards injected by JS -->
+            </div>
+
+            <!-- Servers -->
+            <div class="section-header"
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; margin-top:2rem;">
+                <h3 style="font-size:1.2rem; font-weight:600;">Server Instances</h3>
+                <button class="btn btn-primary btn-sm" onclick="addServer()">+ Add Server</button>
+            </div>
+            <div id="server-list">
+                <!-- Server Cards injected by JS -->
+            </div>
+
+            <!-- Save Action -->
+            <div class="sticky-footer"
+                style="position:sticky; bottom:2rem; background:var(--bg-card); padding:1rem; border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); display:flex; justify-content:flex-end; margin-top:2rem;">
+                <button class="btn btn-primary" id="save-config-btn">Save & Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
