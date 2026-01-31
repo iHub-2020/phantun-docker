@@ -3,7 +3,7 @@
 # Description: Phantun Docker Deployment
 # Author: iHub-2020
 # Date: 2026-02-01
-# Version: 1.0.0
+# Version: 1.1.0
 # ------------------------------------------------------------------------------
 
 version: "3"
@@ -36,12 +36,14 @@ services:
 
     environment:
       - PHANTUN_CONFIG=/etc/phantun/config.json
-      # Note: Port and IP binding are managed via config.json (Web UI)
+      # Login Credentials (Default: admin/admin)
+      - PHANTUN_USER=${PHANTUN_USER:-admin}
+      - PHANTUN_PASSWORD=${PHANTUN_PASSWORD:-admin}
 
-      # --------------------------------------------------------------------------
-      # Healthcheck
-      # Curler to internal API to verify service is up.
-      # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+    # Healthcheck
+    # Curler to internal API to verify service is up.
+    # --------------------------------------------------------------------------
     healthcheck:
       test: [ "CMD", "curl", "-f", "-k", "http://localhost:8080/api/status" ]
       interval: 30s

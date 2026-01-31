@@ -11,9 +11,21 @@ import (
 	"os/signal"
 	"syscall"
 
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
+	"strings"
+	"time"
+
 	"phantun-docker/internal/api"
 	"phantun-docker/internal/config"
 	"phantun-docker/internal/process"
+)
+
+var (
+	authUser  string
+	authPass  string
+	authToken string
 )
 
 //go:embed web/*
@@ -46,13 +58,30 @@ func main() {
 	apiHandler.RegisterRoutes(mux)
 
 	// 5. Serve Static Files (Frontend)
-	// 'web' is the root of embed.FS.
-	// We want to serve 'web' folder content at /.
 	webFS, err := fs.Sub(content, "web")
 	if err != nil {
 		log.Fatal(err)
 	}
-	mux.Handle("/", http.FileServer(http.FS(webFS)))
+	fileHandler := http.FileServer(http.FS(webFS))
+	// We handle "/" with fileHandler, but specific paths first
+	mux.Handle("/", fileHandler)
+
+	// Auth Routes
+	mux.HandleFunc("/api/login", handleLogin)
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		// Serve login.html specifically
+		f, err := webFS.Open("login.html")
+		if err != nil {
+			http.Error(w, "Login page not found", 404)
+			return
+		}
+		defer f.Close()
+		stat, _ := f.Stat()
+		http.ServeContent(w, r, "login.html", stat.ModTime(), f)
+	})
+
+	// Init Auth
+	initAuth()
 
 	// 6. Start HTTP/HTTPS Server
 	certFile := "/etc/phantun/cert.pem"
@@ -68,7 +97,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", *port),
-		Handler: mux,
+		Handler: authMiddleware(mux),
 	}
 
 	go func() {
@@ -92,4 +121,77 @@ func main() {
 
 	log.Println("Shutting down...")
 	mgr.StopAll()
+	mgr.StopAll()
+}
+
+// --- Auth Helpers ---
+
+func initAuth() {
+	authUser = os.Getenv("PHANTUN_USER")
+	if authUser == "" {
+		authUser = "admin"
+	}
+	authPass = os.Getenv("PHANTUN_PASSWORD")
+	if authPass == "" {
+		authPass = "admin"
+	}
+	// Generate random token
+	b := make([]byte, 16)
+	rand.Read(b)
+	authToken = hex.EncodeToString(b)
+	log.Printf("Auth initialized. User: %s", authUser)
+}
+
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allow public paths
+		if r.URL.Path == "/login" || r.URL.Path == "/api/login" || strings.HasPrefix(r.URL.Path, "/static/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Check Cookie
+		cookie, err := r.Cookie("auth_token")
+		if err == nil && cookie.Value == authToken {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Auth failed
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		} else {
+			http.Redirect(w, r, "/login", http.StatusFound)
+		}
+	})
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
+
+	var creds struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Bad request", 400)
+		return
+	}
+
+	if creds.Username == authUser && creds.Password == authPass {
+		// Set Cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:    "auth_token",
+			Value:   authToken,
+			Path:    "/",
+			Expires: time.Now().Add(24 * time.Hour),
+		})
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	} else {
+		http.Error(w, "Invalid credentials", 401)
+	}
 }
