@@ -31,18 +31,103 @@ type ProcessDTO struct {
 	Running bool   `json:"running"`
 }
 
+// LogMessage represents a log entry
+type LogMessage struct {
+	Timestamp time.Time `json:"timestamp"`
+	ProcessID string    `json:"process_id"` // Config ID
+	Stream    string    `json:"stream"`     // "stdout" or "stderr"
+	Content   string    `json:"content"`
+}
+
 // Manager handles all running processes
 type Manager struct {
 	processes map[string]*Process
 	mu        sync.Mutex
 	cfg       *config.Config
+
+	// Log broadcasting
+	logClients   map[chan LogMessage]bool
+	logClientsMu sync.Mutex
 }
 
 func NewManager(cfg *config.Config) *Manager {
 	return &Manager{
-		processes: make(map[string]*Process),
-		cfg:       cfg,
+		processes:  make(map[string]*Process),
+		cfg:        cfg,
+		logClients: make(map[chan LogMessage]bool),
 	}
+}
+
+// BroadcastLog sends a log message to all connected clients
+func (m *Manager) BroadcastLog(msg LogMessage) {
+	m.logClientsMu.Lock()
+	defer m.logClientsMu.Unlock()
+	for ch := range m.logClients {
+		select {
+		case ch <- msg:
+		default:
+			// Drop message if client is too slow
+		}
+	}
+}
+
+// SubscribeLogs returns a channel for receiving logs
+func (m *Manager) SubscribeLogs() chan LogMessage {
+	ch := make(chan LogMessage, 100)
+	m.logClientsMu.Lock()
+	m.logClients[ch] = true
+	m.logClientsMu.Unlock()
+	return ch
+}
+
+// UnsubscribeLogs removes a subscriber
+func (m *Manager) UnsubscribeLogs(ch chan LogMessage) {
+	m.logClientsMu.Lock()
+	delete(m.logClients, ch)
+	m.logClientsMu.Unlock()
+	close(ch)
+}
+
+// Helper to capture output
+func (m *Manager) captureOutput(cmd *exec.Cmd, id string) {
+	stdout, _ := cmd.StdoutPipe()
+	stderr, _ := cmd.StderrPipe()
+
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdout.Read(buf)
+			if n > 0 {
+				m.BroadcastLog(LogMessage{
+					Timestamp: time.Now(),
+					ProcessID: id,
+					Stream:    "stdout",
+					Content:   string(buf[:n]),
+				})
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderr.Read(buf)
+			if n > 0 {
+				m.BroadcastLog(LogMessage{
+					Timestamp: time.Now(),
+					ProcessID: id,
+					Stream:    "stderr",
+					Content:   string(buf[:n]),
+				})
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
 }
 
 // StopAll stops all running processes
@@ -55,7 +140,7 @@ func (m *Manager) StopAll() {
 		if p.Cmd.Process != nil {
 			p.Cmd.Process.Signal(syscall.SIGTERM)
 		}
-		
+
 		// Cleanup iptables
 		if p.Type == "client" {
 			if err := iptables.CleanupClient(p.ClientCfg); err != nil {
@@ -117,7 +202,10 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 	}
 
 	cmd := exec.Command("phantun_client", args...)
-	
+
+	// Capture output
+	m.captureOutput(cmd, c.ID)
+
 	if err := cmd.Start(); err != nil {
 		// Cleanup iptables on failure
 		iptables.CleanupClient(c)
@@ -152,6 +240,10 @@ func (m *Manager) startServer(s config.ServerConfig) error {
 	}
 
 	cmd := exec.Command("phantun_server", args...)
+
+	// Capture output
+	m.captureOutput(cmd, s.ID)
+
 	if err := cmd.Start(); err != nil {
 		iptables.CleanupServer(s)
 		return err
@@ -177,7 +269,7 @@ func (m *Manager) GetStatus() []ProcessDTO {
 	for _, p := range m.processes {
 		// Basic check if process is likely running
 		// In a real manager, we should use os.FindProcess or monitor exit channel
-		running := true 
+		running := true
 		if p.Cmd.ProcessState != nil && p.Cmd.ProcessState.Exited() {
 			running = false
 		}

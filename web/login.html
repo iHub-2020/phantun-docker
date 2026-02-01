@@ -5,42 +5,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Phantun Manager</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #1e293b 0%, #020617 100%);
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 20px;
+            height: 20px;
+        }
+
+        .form-input {
+            padding-left: 40px;
+        }
+    </style>
 </head>
 
-<body class="login-page">
+<body>
     <div class="card login-card">
-        <div class="login-header">
-            <div class="brand login-logo">
-                <span>Phantun</span> Manager
+        <div class="text-center mb-4" style="text-align: center;">
+            <div class="brand justify-center" style="justify-content: center; margin-bottom: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                </svg>
             </div>
-            <p class="text-secondary">Please sign in to continue</p>
+            <h2 class="text-primary">Phantun Manager</h2>
+            <p class="text-secondary text-sm">Please sign in to continue</p>
         </div>
 
         <form id="login-form">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Enter username" required autocomplete="username">
+                <label class="form-label">Username</label>
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="input-icon" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <input type="text" id="username" class="form-input" placeholder="admin" required
+                        onfocus="this.select()">
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter password" required
-                    autocomplete="current-password">
+                <label class="form-label">Password</label>
+                <div class="input-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="input-icon" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <input type="password" id="password" class="form-input" placeholder="admin" required>
+                </div>
             </div>
 
-            <div id="error-msg" class="text-danger"
-                style="margin-bottom: 1rem; display: none; text-align: center; font-size: 0.875rem;">
-                Invalid credentials
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                Sign In
-            </button>
+            <button type="submit" class="btn btn-primary w-full" id="btn-login">Sign In</button>
+            <p id="error-msg" class="text-error text-center text-sm mt-4" style="display:none; text-align: center;"></p>
         </form>
     </div>
 
+    <!-- Use existing login logic but adapt it -->
     <script src="/static/js/login.js"></script>
 </body>
 

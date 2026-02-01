@@ -45,6 +45,7 @@ type Config struct {
 	Clients []ClientConfig `json:"clients"`
 	Servers []ServerConfig `json:"servers"`
 	mu      sync.RWMutex   `json:"-"`
+	Path    string         `json:"-"` // File path for saving
 }
 
 // DefaultConfig returns a default configuration
@@ -64,7 +65,9 @@ func Load(path string) (*Config, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return DefaultConfig(), nil
+			cfg := DefaultConfig()
+			cfg.Path = path
+			return cfg, nil
 		}
 		return nil, err
 	}
@@ -74,15 +77,20 @@ func Load(path string) (*Config, error) {
 	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
 		return nil, err
 	}
+	cfg.Path = path
 	return &cfg, nil
 }
 
 // Save writes configuration to file
-func (c *Config) Save(path string) error {
+func (c *Config) Save() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	f, err := os.Create(path)
+	if c.Path == "" {
+		return os.ErrInvalid
+	}
+
+	f, err := os.Create(c.Path)
 	if err != nil {
 		return err
 	}
@@ -91,4 +99,13 @@ func (c *Config) Save(path string) error {
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	return enc.Encode(c)
+}
+
+// Update updates the configuration fields in a thread-safe manner
+func (c *Config) Update(general GeneralConfig, clients []ClientConfig, servers []ServerConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.General = general
+	c.Clients = clients
+	c.Servers = servers
 }

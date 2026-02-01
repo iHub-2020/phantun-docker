@@ -16,30 +16,32 @@ COPY . .
 ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o phantun-manager main.go
 
-# Stage 2: Phantun Binaries Downloader
+# Stage 2: Phantun Binaries Downloader & Compressor
 FROM alpine:latest AS downloader
 
-RUN apk add --no-cache curl zip
+RUN apk add --no-cache curl zip upx
 
 ARG PHANTUN_VERSION=0.6.0
 ARG TARGETARCH
 
 WORKDIR /downloads
 # Download correct binary for architecture
-# Naming: phantun_{arch}-unknown-linux-musl.zip
 RUN case "${TARGETARCH}" in \
     "amd64") ARCH="x86_64-unknown-linux-musl" ;; \
     "arm64") ARCH="aarch64-unknown-linux-musl" ;; \
     *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
     esac && \
     curl -L "https://github.com/dndx/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
-    unzip phantun.zip
+    unzip phantun.zip && \
+    # Compress binaries
+    chmod +x phantun_client phantun_server && \
+    upx --best --lzma phantun_client phantun_server
 
 # Stage 3: Final Runtime Image
 FROM alpine:latest
 
-# Install runtime dependencies including curl for healthcheck
-RUN apk add --no-cache iptables ip6tables iproute2 ca-certificates bash curl
+# Install runtime dependencies (only essential)
+RUN apk add --no-cache iptables ip6tables iproute2 ca-certificates
 
 WORKDIR /app
 
@@ -53,6 +55,7 @@ RUN mkdir -p /etc/phantun
 
 # Set environment
 ENV PHANTUN_CONFIG=/etc/phantun/config.json
+ENV PATH="/usr/local/bin:$PATH"
 
 # Expose Web UI port
 EXPOSE 8080
