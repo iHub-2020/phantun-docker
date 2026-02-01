@@ -567,7 +567,8 @@ const app = {
     startLogStream() {
         this.logStream = new EventSource(CONFIG.API.LOGS);
         this.logStreaming = true;
-        document.getElementById('logStreamBtn').textContent = 'Stop Refresh';
+        const btn = document.getElementById('logStreamBtn');
+        if (btn) btn.textContent = 'Stop Refresh';
 
         this.logStream.onmessage = (event) => {
             try {
@@ -590,7 +591,29 @@ const app = {
             this.logStream = null;
         }
         this.logStreaming = false;
-        document.getElementById('logStreamBtn').textContent = 'Start Refresh';
+        const btn = document.getElementById('logStreamBtn');
+        if (btn) btn.textContent = 'Start Refresh';
+    },
+
+    downloadLogs() {
+        const content = document.getElementById('logContent').textContent;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phantun-logs-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+
+    scrollLogsToTop() {
+        const container = document.querySelector('.log-container');
+        if (container) container.scrollTop = 0;
+    },
+
+    scrollLogsToBottom() {
+        const container = document.querySelector('.log-container');
+        if (container) container.scrollTop = container.scrollHeight;
     },
 
     appendLog(log) {
