@@ -19,7 +19,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o pha
 # Stage 2: Phantun Binaries Downloader & Compressor
 FROM alpine:latest AS downloader
 
-RUN apk add --no-cache curl zip upx
+RUN apk add --no-cache curl zip upx ca-certificates
 
 ARG PHANTUN_VERSION=0.6.0
 ARG TARGETARCH
@@ -31,7 +31,7 @@ RUN case "${TARGETARCH}" in \
     "arm64") ARCH="aarch64-unknown-linux-musl" ;; \
     *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
     esac && \
-    curl -L "https://github.com/dndx/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
+    curl -fL "https://github.com/dndx/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
     unzip phantun.zip && \
     # Compress binaries
     chmod +x phantun_client phantun_server && \
