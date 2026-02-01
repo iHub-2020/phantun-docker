@@ -41,6 +41,17 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Login Background */
+.login-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+}
+
 /* Layout */
 .app-container {
     max-width: 1200px;
@@ -412,4 +423,214 @@ input:checked+.slider {
 input:checked+.slider:before {
     transform: translateX(20px);
     background-color: white;
+}
+
+/* Page Tabs */
+.page-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+}
+
+.page-tab {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 12px 24px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.page-tab.active {
+    color: var(--accent-success);
+    border-bottom-color: var(--accent-success);
+}
+
+.page-tab:hover {
+    color: var(--text-primary);
+}
+
+/* Page Content */
+.page-content {
+    display: none;
+}
+
+.page-content.active {
+    display: block;
+}
+
+/* Table Footer Alignment */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-group-left {
+    display: flex;
+    gap: 8px;
+}
+
+/* Diagnostics Grid */
+.diag-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.diag-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.diag-label {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.diag-value {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.diag-timestamp {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.status-icon {
+    font-size: 16px;
+}
+
+/* Log Container */
+.log-container {
+    background: var(--bg-body);
+    border-radius: 6px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.log-content {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 16px;
+    margin: 0;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.log-line {
+    display: block;
+}
+
+.log-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+}
+
+/* Settings Form */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.setting-row:last-child {
+    border-bottom: none;
+}
+
+.setting-label {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.setting-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.setting-hint.success {
+    color: var(--accent-success);
+}
+
+/* Safety Card */
+.safety-card {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.safety-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #F59E0B;
+    margin-bottom: 12px;
+}
+
+.safety-card ul {
+    margin: 0;
+    padding-left: 24px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.safety-card ul li {
+    margin-bottom: 8px;
+}
+
+.safety-card ul li:last-child {
+    margin-bottom: 0;
+}
+
+.safety-card strong {
+    color: #F59E0B;
+}
+
+/* Modal Specific */
+.modal-footer .btn-danger {
+    background-color: var(--accent-error);
+    color: white;
+    margin-right: auto;
+}
+
+.modal-footer .btn-danger:hover {
+    background-color: #DC2626;
 }

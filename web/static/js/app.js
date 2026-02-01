@@ -1,291 +1,451 @@
+// Phantun Manager Application
 const app = {
-    config: {
-        general: { enabled: false, log_level: "info" },
-        clients: [],
-        servers: []
+    currentMode: null, // 'server' or 'client'
+    editingIndex: null,
+    logStream: null,
+    logStreaming: false,
+
+    init() {
+        this.setupTabs();
+        this.loadConfig();
+        this.loadStatus();
+        this.checkDiagnostics();
+        // Auto-refresh status every 5s
+        setInterval(() => this.loadStatus(), 5000);
     },
-    currentTab: 'config',
-    logEventSource: null,
 
-    init: async () => {
-        await app.loadConfig();
-        app.updateStatus();
-        setInterval(app.updateStatus, 5000);
-
-        // Modal Backdrop click to close
-        document.getElementById('edit-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'edit-modal') app.closeModal();
+    setupTabs() {
+        document.querySelectorAll('.page-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                document.getElementById(e.target.dataset.target).classList.add('active');
+            });
         });
     },
 
-    loadConfig: async () => {
+    async loadConfig() {
         try {
-            const res = await fetch('/api/config');
-            if (!res.ok) throw new Error("Failed to load config");
-            app.config = await res.json();
-            app.renderAll();
-        } catch (e) {
-            console.error(e);
-            alert("Error loading configuration");
+            const resp = await fetch('/api/config');
+            const config = await resp.json();
+            this.renderServers(config.servers || []);
+            this.renderClients(config.clients || []);
+            document.getElementById('enableService').checked = config.general?.enabled !== false;
+            document.getElementById('logLevel').value = config.general?.log_level || 'info';
+        } catch (err) {
+            console.error('Failed to load config:', err);
         }
     },
 
-    renderAll: () => {
-        // Global Settings
-        document.getElementById('global-enable').checked = app.config.general.enabled;
-        document.getElementById('global-loglevel').value = app.config.general.log_level;
-
-        // Clients
-        const clientContainer = document.getElementById('client-list');
-        clientContainer.innerHTML = app.config.clients.map(c => app.renderCard(c, 'client')).join('');
-
-        // Servers
-        const serverContainer = document.getElementById('server-list');
-        serverContainer.innerHTML = app.config.servers.map(s => app.renderCard(s, 'server')).join('');
-    },
-
-    renderCard: (item, type) => {
-        const statusClass = item.enabled ? 'text-success' : 'text-secondary';
-        const colorClass = type === 'client' ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-purple-500';
-        // Note: Tailwind border-l-4 logic isn't in our pure CSS, but we can add inline style for visual distinction if we want.
-        // Or simplified:
-        const icon = type === 'client'
-            ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>'
-            : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 01-2 2v4a2 2 0 012 2h14a2 2 0 012-2v-4a2 2 0 01-2-2m-2-4h.01M17 16h.01"></path></svg>';
-
-        return `
-            <div class="card flex justify-between items-center" style="border-left: 4px solid ${type === 'client' ? '#3B82F6' : '#A855F7'}">
-                <div class="flex items-center gap-4">
-                    <div class="p-2 bg-slate-800 rounded text-secondary">${icon}</div>
-                    <div>
-                        <div class="text-lg font-semibold flex items-center gap-2">
-                            ${item.alias}
-                            <span class="text-xs ${statusClass}">● ${item.enabled ? 'Enabled' : 'Disabled'}</span>
-                        </div>
-                        <div class="text-sm text-secondary text-mono mt-1">
-                            ${item.local_port || item.local_addr} <span class="text-muted">→</span> ${item.remote_addr}:${item.remote_port}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button class="btn btn-secondary btn-sm" onclick="app.editInstance('${type}', '${item.id}')">Edit</button>
-                    ${item.enabled
-                ? `<button class="btn btn-danger btn-sm" onclick="app.toggleInstance('${type}', '${item.id}', false)">Stop</button>`
-                : `<button class="btn btn-success btn-sm" onclick="app.toggleInstance('${type}', '${item.id}', true)">Start</button>`
-            }
-                </div>
-            </div>
-        `;
-    },
-
-    toggleGlobal: () => {
-        app.config.general.enabled = document.getElementById('global-enable').checked;
-        app.saveConfig();
-    },
-
-    toggleInstance: (type, id, state) => {
-        const list = type === 'client' ? app.config.clients : app.config.servers;
-        const item = list.find(x => x.id === id);
-        if (item) {
-            item.enabled = state;
-            app.saveConfig();
+    async loadStatus() {
+        try {
+            const resp = await fetch('/api/status');
+            const status = await resp.json();
+            this.updateServiceStatus(status);
+            this.updateTunnelStatus(status.processes || []);
+        } catch (err) {
+            console.error('Failed to load status:', err);
         }
     },
 
-    saveConfig: async () => {
-        // Update general config from UI first if needed (log level)
-        app.config.general.log_level = document.getElementById('global-loglevel').value;
+    updateServiceStatus(status) {
+        const badge = document.getElementById('serviceStatus');
+        const count = document.getElementById('tunnelCount');
+        const running = (status.processes || []).filter(p => p.running).length;
+        const total = (status.processes || []).length;
+
+        if (running > 0) {
+            badge.textContent = 'Running';
+            badge.className = 'status-badge running';
+        } else {
+            badge.textContent = 'Stopped';
+            badge.className = 'status-badge stopped';
+        }
+        count.textContent = `(${running}/${total} tunnels active)`;
+    },
+
+    updateTunnelStatus(processes) {
+        const tbody = document.getElementById('tunnelStatusBody');
+        if (processes.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No tunnels configured.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = processes.map(p => `
+            <tr>
+                <td>${this.escapeHtml(p.alias || p.id)}</td>
+                <td>${p.type === 'client' ? 'Client' : 'Server'}</td>
+                <td><span class="status-badge ${p.running ? 'running' : 'stopped'}">${p.running ? 'Running' : 'Stopped'}</span></td>
+                <td>${this.escapeHtml(p.local || '-')}</td>
+                <td>${this.escapeHtml(p.remote || '-')}</td>
+                <td>${this.escapeHtml(p.tun_local || '-')} ↔ ${this.escapeHtml(p.tun_peer || '-')}</td>
+                <td>${p.pid || '-'}</td>
+            </tr>
+        `).join('');
+    },
+
+    async checkDiagnostics() {
+        const diagBinary = document.getElementById('diagBinary');
+        const diagIptables = document.getElementById('diagIptables');
 
         try {
-            const res = await fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(app.config)
-            });
-            if (!res.ok) throw new Error("Failed to save");
-            app.renderAll();
-            // Re-fetch status to update PIDs etc
-            setTimeout(app.updateStatus, 1000);
-        } catch (e) {
-            alert("Error saving config: " + e.message);
+            const resp = await fetch('/api/status');
+            const data = await resp.json();
+
+            // Core Binary Status
+            diagBinary.innerHTML = data.binary_ok ?
+                '<span class="status-icon">✓</span><span>Phantun binaries found</span>' :
+                '<span class="status-icon">✗</span><span>Phantun binaries missing</span>';
+
+            // Iptables Status
+            const iptablesResp = await fetch('/api/iptables');
+            const iptables = await iptablesResp.json();
+            const count = (iptables.rules || []).length;
+            diagIptables.innerHTML = count > 0 ?
+                `<span class="status-icon">✓</span><span>${count} rules active</span>` :
+                '<span class="status-icon">⚠</span><span>No rules configured</span>';
+        } catch (err) {
+            console.error('Diagnostics check failed:', err);
         }
     },
 
-    // Modal Logic
-    addClient: () => {
-        app.openModal('client', null);
-    },
-    addServer: () => {
-        app.openModal('server', null);
-    },
-    editInstance: (type, id) => {
-        app.openModal(type, id);
+    renderServers(servers) {
+        const tbody = document.getElementById('serverTableBody');
+        if (servers.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No server instances.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = servers.map((srv, idx) => `
+            <tr>
+                <td>${this.escapeHtml(srv.alias || `Server ${idx + 1}`)}</td>
+                <td><input type="checkbox" ${srv.enabled ? 'checked' : ''} disabled></td>
+                <td>${srv.server_port || '-'}</td>
+                <td>${this.escapeHtml(srv.forward_ip || '-')}</td>
+                <td>${srv.forward_port || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline" onclick="app.openEditModal('server', ${idx})">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="app.deleteInstanceDirect('server', ${idx})">Delete</button>
+                </td>
+            </tr>
+        `).join('');
     },
 
-    openModal: (type, id) => {
-        const isEdit = !!id;
-        const list = type === 'client' ? app.config.clients : app.config.servers;
-        const item = isEdit ? list.find(x => x.id === id) : {
-            id: crypto.randomUUID(),
-            alias: '', enabled: true,
-            local_addr: '127.0.0.1', local_port: '4567', // Default for client
-            remote_addr: '1.2.3.4', remote_port: '4567',
-            tun_local: '192.168.200.2', tun_peer: '192.168.200.1',
-            tun_name: ''
+    renderClients(clients) {
+        const tbody = document.getElementById('clientTableBody');
+        if (clients.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No client instances.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = clients.map((cli, idx) => `
+            <tr>
+                <td>${this.escapeHtml(cli.alias || `Client ${idx + 1}`)}</td>
+                <td><input type="checkbox" ${cli.enabled ? 'checked' : ''} disabled></td>
+                <td>${this.escapeHtml(cli.remote_addr || '-')}</td>
+                <td>${cli.remote_port || '-'}</td>
+                <td>${cli.local_port || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline" onclick="app.openEditModal('client', ${idx})">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="app.deleteInstanceDirect('client', ${idx})">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    },
+
+    openAddModal(mode) {
+        this.currentMode = mode;
+        this.editingIndex = null;
+        document.getElementById('editModalTitle').textContent = mode === 'server' ? 'Add Server Instance' : 'Add Client Instance';
+        this.clearModalFields();
+        this.showModalFields(mode);
+        document.getElementById('deleteBtn').style.display = 'none';
+        document.getElementById('editModal').classList.add('active');
+    },
+
+    openEditModal(mode, index) {
+        this.currentMode = mode;
+        this.editingIndex = index;
+        document.getElementById('editModalTitle').textContent = mode === 'server' ? 'Edit Server Instance' : 'Edit Client Instance';
+        this.loadModalData(mode, index);
+        this.showModalFields(mode);
+        document.getElementById('deleteBtn').style.display = 'inline-block';
+        document.getElementById('editModal').classList.add('active');
+    },
+
+    async loadModalData(mode, index) {
+        const resp = await fetch('/api/config');
+        const config = await resp.json();
+        const data = mode === 'server' ? config.servers[index] : config.clients[index];
+
+        document.getElementById('editEnable').checked = data.enabled !== false;
+        document.getElementById('editAlias').value = data.alias || '';
+        document.getElementById('editTunLocal').value = data.tun_local || '';
+        document.getElementById('editTunPeer').value = data.tun_peer || '';
+
+        if (mode === 'server') {
+            document.getElementById('editServerPort').value = data.server_port || '';
+            document.getElementById('editForwardIp').value = data.forward_ip || '';
+            document.getElementById('editForwardPort').value = data.forward_port || '';
+        } else {
+            document.getElementById('editRemoteAddr').value = data.remote_addr || '';
+            document.getElementById('editRemotePort').value = data.remote_port || '';
+            document.getElementById('editLocalPort').value = data.local_port || '';
+        }
+    },
+
+    showModalFields(mode) {
+        const serverFields = document.querySelectorAll('.server-field');
+        const clientFields = document.querySelectorAll('.client-field');
+
+        if (mode === 'server') {
+            serverFields.forEach(f => f.style.display = '');
+            clientFields.forEach(f => f.style.display = 'none');
+        } else {
+            serverFields.forEach(f => f.style.display = 'none');
+            clientFields.forEach(f => f.style.display = '');
+        }
+    },
+
+    clearModalFields() {
+        document.getElementById('editEnable').checked = true;
+        document.getElementById('editAlias').value = '';
+        document.getElementById('editServerPort').value = '';
+        document.getElementById('editForwardIp').value = '';
+        document.getElementById('editForwardPort').value = '';
+        document.getElementById('editRemoteAddr').value = '';
+        document.getElementById('editRemotePort').value = '';
+        document.getElementById('editLocalPort').value = '';
+        document.getElementById('editTunLocal').value = '';
+        document.getElementById('editTunPeer').value = '';
+    },
+
+    async saveInstance() {
+        const resp = await fetch('/api/config');
+        const config = await resp.json();
+
+        const instance = {
+            enabled: document.getElementById('editEnable').checked,
+            alias: document.getElementById('editAlias').value,
+            tun_local: document.getElementById('editTunLocal').value,
+            tun_peer: document.getElementById('editTunPeer').value
         };
 
-        if (type === 'server' && !isEdit) {
-            // Adjust defaults for server
-            item.local_port = '4567';
-            delete item.local_addr;
-        }
+        if (this.currentMode === 'server') {
+            instance.server_port = parseInt(document.getElementById('editServerPort').value);
+            instance.forward_ip = document.getElementById('editForwardIp').value;
+            instance.forward_port = parseInt(document.getElementById('editForwardPort').value);
 
-        document.getElementById('modal-title').innerText = isEdit ? `Edit ${type === 'client' ? 'Client' : 'Server'}` : `Add Isntance`;
-        document.getElementById('edit-id').value = item.id;
-        document.getElementById('edit-type').value = type;
-        document.getElementById('edit-alias').value = item.alias;
-        document.getElementById('edit-enabled').checked = item.enabled;
-
-        document.getElementById('edit-remote').value = `${item.remote_addr}:${item.remote_port}`;
-        document.getElementById('edit-tun-local').value = item.tun_local;
-        document.getElementById('edit-tun-peer').value = item.tun_peer;
-        document.getElementById('edit-tun-name').value = item.tun_name || '';
-
-        // Handle mixed local input
-        if (type === 'client') {
-            document.getElementById('edit-local').value = `${item.local_addr}:${item.local_port}`;
-            document.getElementById('edit-local').placeholder = "127.0.0.1:4567";
+            if (this.editingIndex !== null) {
+                config.servers[this.editingIndex] = instance;
+            } else {
+                config.servers = config.servers || [];
+                config.servers.push(instance);
+            }
         } else {
-            document.getElementById('edit-local').value = item.local_port;
-            document.getElementById('edit-local').placeholder = "4567 (Port only)";
+            instance.remote_addr = document.getElementById('editRemoteAddr').value;
+            instance.remote_port = parseInt(document.getElementById('editRemotePort').value);
+            instance.local_port = parseInt(document.getElementById('editLocalPort').value);
+
+            if (this.editingIndex !== null) {
+                config.clients[this.editingIndex] = instance;
+            } else {
+                config.clients = config.clients || [];
+                config.clients.push(instance);
+            }
         }
 
-        document.getElementById('edit-modal').classList.add('active');
-    },
-
-    closeModal: () => {
-        document.getElementById('edit-modal').classList.remove('active');
-    },
-
-    saveInstance: () => {
-        const id = document.getElementById('edit-id').value;
-        const type = document.getElementById('edit-type').value;
-        const list = type === 'client' ? app.config.clients : app.config.servers;
-
-        let item = list.find(x => x.id === id);
-        if (!item) {
-            item = { id };
-            list.push(item);
-        }
-
-        item.alias = document.getElementById('edit-alias').value;
-        item.enabled = document.getElementById('edit-enabled').checked;
-        item.tun_local = document.getElementById('edit-tun-local').value;
-        item.tun_peer = document.getElementById('edit-tun-peer').value;
-        item.tun_name = document.getElementById('edit-tun-name').value;
-
-        // Parse Remote
-        const [rAddr, rPort] = document.getElementById('edit-remote').value.split(':');
-        item.remote_addr = rAddr;
-        item.remote_port = rPort;
-
-        // Parse Local
-        const localVal = document.getElementById('edit-local').value;
-        if (type === 'client') {
-            const [lAddr, lPort] = localVal.split(':');
-            item.local_addr = lAddr;
-            item.local_port = lPort;
-        } else {
-            item.local_port = localVal;
-        }
-
-        app.saveConfig();
-        app.closeModal();
-    },
-
-    deleteInstance: () => {
-        if (!confirm("Are you sure?")) return;
-        const id = document.getElementById('edit-id').value;
-        const type = document.getElementById('edit-type').value;
-
-        if (type === 'client') {
-            app.config.clients = app.config.clients.filter(x => x.id !== id);
-        } else {
-            app.config.servers = app.config.servers.filter(x => x.id !== id);
-        }
-        app.saveConfig();
-        app.closeModal();
-    },
-
-    // Tabs
-    switchTab: (tab) => {
-        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-        document.getElementById(`view-${tab}`).style.display = 'block';
-
-        // Update Buttons
-        document.querySelectorAll('button[id^="tab-"]').forEach(btn => {
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-secondary');
+        await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
         });
-        const activeBtn = document.getElementById(`tab-${tab}`);
-        activeBtn.classList.remove('btn-secondary');
-        activeBtn.classList.add('btn-primary');
 
-        if (tab === 'logs') app.startLogStream();
-        else app.stopLogStream();
+        this.closeModal('editModal');
+        this.loadConfig();
+    },
 
-        if (tab === 'topology') topology.render(app.config);
+    async deleteInstance() {
+        if (!confirm('Are you sure you want to delete this instance?')) return;
+        await this.deleteInstanceDirect(this.currentMode, this.editingIndex);
+        this.closeModal('editModal');
+    },
+
+    async deleteInstanceDirect(mode, index) {
+        if (!confirm('Delete this instance?')) return;
+        const resp = await fetch('/api/config');
+        const config = await resp.json();
+
+        if (mode === 'server') {
+            config.servers.splice(index, 1);
+        } else {
+            config.clients.splice(index, 1);
+        }
+
+        await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+
+        this.loadConfig();
+    },
+
+    closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    },
+
+    async saveAndApply() {
+        await this.saveConfig();
+        await fetch('/api/action/restart', { method: 'POST' });
+        alert('Configuration saved and applied! Services restarting...');
+        setTimeout(() => this.loadStatus(), 2000);
+    },
+
+    async saveOnly() {
+        await this.saveConfig();
+        alert('Configuration saved.');
+    },
+
+    async saveConfig() {
+        const resp = await fetch('/api/config');
+        const config = await resp.json();
+
+        config.general = {
+            enabled: document.getElementById('enableService').checked,
+            log_level: document.getElementById('logLevel').value
+        };
+
+        await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+    },
+
+    async resetConfigWithConfirm() {
+        if (!confirm('Reset to default configuration? This will delete all instances!')) return;
+        await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ general: {}, servers: [], clients: [] })
+        });
+        this.loadConfig();
+    },
+
+    // Import/Export
+    importConfig(mode) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            const text = await file.text();
+            const instances = JSON.parse(text);
+
+            const resp = await fetch('/api/config');
+            const config = await resp.json();
+
+            if (mode === 'server') {
+                config.servers = instances;
+            } else {
+                config.clients = instances;
+            }
+
+            await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            this.loadConfig();
+            alert(`Imported ${instances.length} ${mode} instance(s).`);
+        };
+        input.click();
+    },
+
+    async exportConfig(mode) {
+        const resp = await fetch('/api/config');
+        const config = await resp.json();
+        const data = mode === 'server' ? config.servers : config.clients;
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phantun-${mode}s-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
     },
 
     // Logs
-    startLogStream: () => {
-        if (app.logEventSource) return;
-        const consoleEl = document.getElementById('log-console');
-        consoleEl.innerHTML = '<div class="log-line text-muted">Connecting to log stream...</div>';
+    toggleLogStream() {
+        if (this.logStreaming) {
+            this.stopLogStream();
+        } else {
+            this.startLogStream();
+        }
+    },
 
-        app.logEventSource = new EventSource('/api/logs');
-        app.logEventSource.onmessage = (e) => {
-            if (e.data === ': heartbeat') return;
-            const msg = JSON.parse(e.data);
-            const div = document.createElement('div');
-            div.className = 'log-line';
-            const time = new Date(msg.timestamp).toLocaleTimeString();
-            div.innerHTML = `<span class="log-time">[${time}]</span> <span class="text-xs text-muted">${msg.process_id}</span> <span class="log-${msg.stream}">${msg.content}</span>`;
-            consoleEl.appendChild(div);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
+    startLogStream() {
+        this.logStream = new EventSource('/api/logs');
+        this.logStreaming = true;
+        document.getElementById('logStreamBtn').textContent = 'Stop Refresh';
+
+        this.logStream.onmessage = (event) => {
+            try {
+                const log = JSON.parse(event.data);
+                this.appendLog(log);
+            } catch (err) {
+                console.error('Failed to parse log:', err);
+            }
+        };
+
+        this.logStream.onerror = () => {
+            console.error('Log stream error');
+            this.stopLogStream();
         };
     },
 
-    stopLogStream: () => {
-        if (app.logEventSource) {
-            app.logEventSource.close();
-            app.logEventSource = null;
+    stopLogStream() {
+        if (this.logStream) {
+            this.logStream.close();
+            this.logStream = null;
+        }
+        this.logStreaming = false;
+        document.getElementById('logStreamBtn').textContent = 'Start Refresh';
+    },
+
+    appendLog(log) {
+        const container = document.getElementById('logContent');
+        const line = document.createElement('span');
+        line.className = 'log-line';
+        line.textContent = `[${log.timestamp || new Date().toISOString()}] [${log.source || 'system'}] ${log.message}`;
+        container.appendChild(line);
+
+        // Update timestamp
+        const now = new Date();
+        document.getElementById('logTimestamp').textContent = now.toLocaleTimeString();
+
+        // Auto-scroll
+        if (container.parentElement.scrollTop + container.parentElement.clientHeight >= container.parentElement.scrollHeight - 50) {
+            this.scrollLogsToBottom();
         }
     },
 
-    clearLogs: () => {
-        document.getElementById('log-console').innerHTML = '';
+    clearLogs() {
+        document.getElementById('logContent').innerHTML = '<span class="log-line">Logs cleared.</span>';
     },
 
-    updateStatus: async () => {
-        try {
-            const res = await fetch('/api/status');
-            const data = await res.json();
-            const el = document.getElementById('status-text');
-            const dot = document.querySelector('.status-dot');
-            el.innerText = data.enabled ? "Service Running" : "Service Stopped";
-            dot.className = `status-dot ${data.enabled ? 'running' : 'stopped'}`;
+    scrollLogsToBottom() {
+        const container = document.getElementById('logContent').parentElement;
+        container.scrollTop = container.scrollHeight;
+    },
 
-            // Only update live topology if visible
-            if (document.getElementById('view-topology').style.display === 'block') {
-                // Pass runtime status to topology
-                topology.updateStatus(data.processes);
-            }
-        } catch (e) {
-            // ignore
-        }
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 };
 
-// Start
-document.addEventListener('DOMContentLoaded', app.init);
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => app.init());
