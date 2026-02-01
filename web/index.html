@@ -12,6 +12,9 @@
 </head>
 
 <body>
+    <!-- Skip to Main Content (Accessibility) -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Top Header -->
     <header class="top-header">
         <div class="header-center">
@@ -33,7 +36,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" id="main-content" role="main" aria-label="Dashboard and Configuration">
         <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-info">
@@ -44,13 +47,15 @@
         </div>
 
         <!-- Page Tabs -->
-        <div class="page-tabs">
-            <button class="page-tab active" data-target="dashboardPage">Dashboard</button>
-            <button class="page-tab" data-target="configPage">Configuration</button>
+        <div class="page-tabs" role="tablist" aria-label="Page Navigation">
+            <button class="page-tab active" data-target="dashboardPage" role="tab" aria-selected="true"
+                aria-controls="dashboardPage">Dashboard</button>
+            <button class="page-tab" data-target="configPage" role="tab" aria-selected="false"
+                aria-controls="configPage">Configuration</button>
         </div>
 
         <!-- Dashboard Page -->
-        <div class="page-content active" id="dashboardPage">
+        <div class="page-content active" id="dashboardPage" role="tabpanel" aria-labelledby="Dashboard">
             <!-- Tunnel Status Table -->
             <div class="config-section">
                 <div class="section-header">
@@ -134,7 +139,7 @@
         </div>
 
         <!-- Configuration Page -->
-        <div class="page-content" id="configPage">
+        <div class="page-content" id="configPage" role="tabpanel" aria-labelledby="Configuration" aria-hidden="true">
             <!-- Safety Warning -->
             <div class="safety-card">
                 <div class="safety-title">
@@ -309,11 +314,11 @@
     </main>
 
     <!-- Edit Modal -->
-    <div class="modal-overlay" id="editModal">
+    <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title" id="editModalTitle">New Instance</span>
-                <button class="modal-close" onclick="app.closeModal('editModal')">
+                <button class="modal-close" onclick="app.closeModal('editModal')" aria-label="Close modal">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>

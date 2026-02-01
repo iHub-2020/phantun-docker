@@ -12,22 +12,88 @@ const app = {
         this.checkDiagnostics();
         // Auto-refresh status every 5s
         setInterval(() => this.loadStatus(), 5000);
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => this.cleanup());
+    },
+
+    cleanup() {
+        if (this.logStream) {
+            this.logStream.close();
+        }
+    },
+
+    showError(message, details = '') {
+        const errorBox = document.createElement('div');
+        errorBox.className = 'error-toast';
+        errorBox.innerHTML = `
+            <strong>Error:</strong> ${this.escapeHtml(message)}
+            ${details ? `<br><small>${this.escapeHtml(details)}</small>` : ''}
+        `;
+        document.body.appendChild(errorBox);
+        setTimeout(() => errorBox.classList.add('show'), 10);
+        setTimeout(() => {
+            errorBox.classList.remove('show');
+            setTimeout(() => errorBox.remove(), 300);
+        }, 5000);
+    },
+
+    showSuccess(message) {
+        const successBox = document.createElement('div');
+        successBox.className = 'success-toast';
+        successBox.innerHTML = `<strong>Success:</strong> ${this.escapeHtml(message)}`;
+        document.body.appendChild(successBox);
+        setTimeout(() => successBox.classList.add('show'), 10);
+        setTimeout(() => {
+            successBox.classList.remove('show');
+            setTimeout(() => successBox.remove(), 300);
+        }, 3000);
+    },
+
+    async fetchWithError(url, options = {}) {
+        try {
+            const resp = await fetch(url, options);
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text || resp.statusText}`);
+            }
+            return resp;
+        } catch (err) {
+            if (err.name === 'TypeError' && err.message.includes('fetch')) {
+                throw new Error('Network error - unable to reach server');
+            }
+            throw err;
+        }
     },
 
     setupTabs() {
         document.querySelectorAll('.page-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.page-content').forEach(c => c.classList.remove('active'));
+                // Update tabs
+                document.querySelectorAll('.page-tab').forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+
+                // Update panels
+                document.querySelectorAll('.page-content').forEach(c => {
+                    c.classList.remove('active');
+                    c.setAttribute('aria-hidden', 'true');
+                });
+
+                // Activate selected
                 e.target.classList.add('active');
-                document.getElementById(e.target.dataset.target).classList.add('active');
+                e.target.setAttribute('aria-selected', 'true');
+
+                const panel = document.getElementById(e.target.dataset.target);
+                panel.classList.add('active');
+                panel.setAttribute('aria-hidden', 'false');
             });
         });
     },
 
     async loadConfig() {
         try {
-            const resp = await fetch('/api/config');
+            const resp = await this.fetchWithError('/api/config');
             const config = await resp.json();
             this.renderServers(config.servers || []);
             this.renderClients(config.clients || []);
@@ -35,17 +101,19 @@ const app = {
             document.getElementById('logLevel').value = config.general?.log_level || 'info';
         } catch (err) {
             console.error('Failed to load config:', err);
+            this.showError('Failed to load configuration', err.message);
         }
     },
 
     async loadStatus() {
         try {
-            const resp = await fetch('/api/status');
+            const resp = await this.fetchWithError('/api/status');
             const status = await resp.json();
             this.updateServiceStatus(status);
             this.updateTunnelStatus(status.processes || []);
         } catch (err) {
             console.error('Failed to load status:', err);
+            // Don't show error for status polling to avoid spam
         }
     },
 
@@ -89,7 +157,7 @@ const app = {
         const diagIptables = document.getElementById('diagIptables');
 
         try {
-            const resp = await fetch('/api/status');
+            const resp = await this.fetchWithError('/api/status');
             const data = await resp.json();
 
             // Core Binary Status
@@ -98,7 +166,7 @@ const app = {
                 '<span class="status-icon">✗</span><span>Phantun binaries missing</span>';
 
             // Iptables Status
-            const iptablesResp = await fetch('/api/iptables');
+            const iptablesResp = await this.fetchWithError('/api/iptables');
             const iptables = await iptablesResp.json();
             const count = (iptables.rules || []).length;
             diagIptables.innerHTML = count > 0 ?
@@ -106,6 +174,7 @@ const app = {
                 '<span class="status-icon">⚠</span><span>No rules configured</span>';
         } catch (err) {
             console.error('Diagnostics check failed:', err);
+            this.showError('Failed to run diagnostics', err.message);
         }
     },
 
@@ -172,23 +241,29 @@ const app = {
     },
 
     async loadModalData(mode, index) {
-        const resp = await fetch('/api/config');
-        const config = await resp.json();
-        const data = mode === 'server' ? config.servers[index] : config.clients[index];
+        try {
+            const resp = await this.fetchWithError('/api/config');
+            const config = await resp.json();
+            const data = mode === 'server' ? config.servers[index] : config.clients[index];
 
-        document.getElementById('editEnable').checked = data.enabled !== false;
-        document.getElementById('editAlias').value = data.alias || '';
-        document.getElementById('editTunLocal').value = data.tun_local || '';
-        document.getElementById('editTunPeer').value = data.tun_peer || '';
+            document.getElementById('editEnable').checked = data.enabled !== false;
+            document.getElementById('editAlias').value = data.alias || '';
+            document.getElementById('editTunLocal').value = data.tun_local || '';
+            document.getElementById('editTunPeer').value = data.tun_peer || '';
 
-        if (mode === 'server') {
-            document.getElementById('editServerPort').value = data.server_port || '';
-            document.getElementById('editForwardIp').value = data.forward_ip || '';
-            document.getElementById('editForwardPort').value = data.forward_port || '';
-        } else {
-            document.getElementById('editRemoteAddr').value = data.remote_addr || '';
-            document.getElementById('editRemotePort').value = data.remote_port || '';
-            document.getElementById('editLocalPort').value = data.local_port || '';
+            if (mode === 'server') {
+                document.getElementById('editServerPort').value = data.server_port || '';
+                document.getElementById('editForwardIp').value = data.forward_ip || '';
+                document.getElementById('editForwardPort').value = data.forward_port || '';
+            } else {
+                document.getElementById('editRemoteAddr').value = data.remote_addr || '';
+                document.getElementById('editRemotePort').value = data.remote_port || '';
+                document.getElementById('editLocalPort').value = data.local_port || '';
+            }
+        } catch (err) {
+            console.error('Failed to load instance data:', err);
+            this.showError('Failed to load instance data', err.message);
+            this.closeModal('editModal');
         }
     },
 
@@ -219,48 +294,54 @@ const app = {
     },
 
     async saveInstance() {
-        const resp = await fetch('/api/config');
-        const config = await resp.json();
+        try {
+            const resp = await this.fetchWithError('/api/config');
+            const config = await resp.json();
 
-        const instance = {
-            enabled: document.getElementById('editEnable').checked,
-            alias: document.getElementById('editAlias').value,
-            tun_local: document.getElementById('editTunLocal').value,
-            tun_peer: document.getElementById('editTunPeer').value
-        };
+            const instance = {
+                enabled: document.getElementById('editEnable').checked,
+                alias: document.getElementById('editAlias').value,
+                tun_local: document.getElementById('editTunLocal').value,
+                tun_peer: document.getElementById('editTunPeer').value
+            };
 
-        if (this.currentMode === 'server') {
-            instance.server_port = parseInt(document.getElementById('editServerPort').value);
-            instance.forward_ip = document.getElementById('editForwardIp').value;
-            instance.forward_port = parseInt(document.getElementById('editForwardPort').value);
+            if (this.currentMode === 'server') {
+                instance.server_port = parseInt(document.getElementById('editServerPort').value);
+                instance.forward_ip = document.getElementById('editForwardIp').value;
+                instance.forward_port = parseInt(document.getElementById('editForwardPort').value);
 
-            if (this.editingIndex !== null) {
-                config.servers[this.editingIndex] = instance;
+                if (this.editingIndex !== null) {
+                    config.servers[this.editingIndex] = instance;
+                } else {
+                    config.servers = config.servers || [];
+                    config.servers.push(instance);
+                }
             } else {
-                config.servers = config.servers || [];
-                config.servers.push(instance);
-            }
-        } else {
-            instance.remote_addr = document.getElementById('editRemoteAddr').value;
-            instance.remote_port = parseInt(document.getElementById('editRemotePort').value);
-            instance.local_port = parseInt(document.getElementById('editLocalPort').value);
+                instance.remote_addr = document.getElementById('editRemoteAddr').value;
+                instance.remote_port = parseInt(document.getElementById('editRemotePort').value);
+                instance.local_port = parseInt(document.getElementById('editLocalPort').value);
 
-            if (this.editingIndex !== null) {
-                config.clients[this.editingIndex] = instance;
-            } else {
-                config.clients = config.clients || [];
-                config.clients.push(instance);
+                if (this.editingIndex !== null) {
+                    config.clients[this.editingIndex] = instance;
+                } else {
+                    config.clients = config.clients || [];
+                    config.clients.push(instance);
+                }
             }
+
+            await this.fetchWithError('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            this.showSuccess('Instance saved successfully');
+            this.closeModal('editModal');
+            this.loadConfig();
+        } catch (err) {
+            console.error('Failed to save instance:', err);
+            this.showError('Failed to save instance', err.message);
         }
-
-        await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-        });
-
-        this.closeModal('editModal');
-        this.loadConfig();
     },
 
     async deleteInstance() {
@@ -271,22 +352,28 @@ const app = {
 
     async deleteInstanceDirect(mode, index) {
         if (!confirm('Delete this instance?')) return;
-        const resp = await fetch('/api/config');
-        const config = await resp.json();
+        try {
+            const resp = await this.fetchWithError('/api/config');
+            const config = await resp.json();
 
-        if (mode === 'server') {
-            config.servers.splice(index, 1);
-        } else {
-            config.clients.splice(index, 1);
+            if (mode === 'server') {
+                config.servers.splice(index, 1);
+            } else {
+                config.clients.splice(index, 1);
+            }
+
+            await this.fetchWithError('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            this.showSuccess('Instance deleted successfully');
+            this.loadConfig();
+        } catch (err) {
+            console.error('Failed to delete instance:', err);
+            this.showError('Failed to delete instance', err.message);
         }
-
-        await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-        });
-
-        this.loadConfig();
     },
 
     closeModal(id) {
@@ -294,19 +381,29 @@ const app = {
     },
 
     async saveAndApply() {
-        await this.saveConfig();
-        await fetch('/api/action/restart', { method: 'POST' });
-        alert('Configuration saved and applied! Services restarting...');
-        setTimeout(() => this.loadStatus(), 2000);
+        try {
+            await this.saveConfig();
+            await this.fetchWithError('/api/action/restart', { method: 'POST' });
+            this.showSuccess('Configuration saved and applied! Services restarting...');
+            setTimeout(() => this.loadStatus(), 2000);
+        } catch (err) {
+            console.error('Failed to save and apply:', err);
+            this.showError('Failed to save and apply', err.message);
+        }
     },
 
     async saveOnly() {
-        await this.saveConfig();
-        alert('Configuration saved.');
+        try {
+            await this.saveConfig();
+            this.showSuccess('Configuration saved successfully');
+        } catch (err) {
+            console.error('Failed to save config:', err);
+            this.showError('Failed to save configuration', err.message);
+        }
     },
 
     async saveConfig() {
-        const resp = await fetch('/api/config');
+        const resp = await this.fetchWithError('/api/config');
         const config = await resp.json();
 
         config.general = {
@@ -314,7 +411,7 @@ const app = {
             log_level: document.getElementById('logLevel').value
         };
 
-        await fetch('/api/config', {
+        await this.fetchWithError('/api/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -323,12 +420,18 @@ const app = {
 
     async resetConfigWithConfirm() {
         if (!confirm('Reset to default configuration? This will delete all instances!')) return;
-        await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ general: {}, servers: [], clients: [] })
-        });
-        this.loadConfig();
+        try {
+            await this.fetchWithError('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ general: {}, servers: [], clients: [] })
+            });
+            this.showSuccess('Configuration reset to defaults');
+            this.loadConfig();
+        } catch (err) {
+            console.error('Failed to reset config:', err);
+            this.showError('Failed to reset configuration', err.message);
+        }
     },
 
     // Import/Export
@@ -337,43 +440,54 @@ const app = {
         input.type = 'file';
         input.accept = '.json';
         input.onchange = async (e) => {
-            const file = e.target.files[0];
-            const text = await file.text();
-            const instances = JSON.parse(text);
+            try {
+                const file = e.target.files[0];
+                const text = await file.text();
+                const instances = JSON.parse(text);
 
-            const resp = await fetch('/api/config');
-            const config = await resp.json();
+                const resp = await this.fetchWithError('/api/config');
+                const config = await resp.json();
 
-            if (mode === 'server') {
-                config.servers = instances;
-            } else {
-                config.clients = instances;
+                if (mode === 'server') {
+                    config.servers = instances;
+                } else {
+                    config.clients = instances;
+                }
+
+                await this.fetchWithError('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                this.loadConfig();
+                this.showSuccess(`Imported ${instances.length} ${mode} instance(s)`);
+            } catch (err) {
+                console.error('Failed to import config:', err);
+                this.showError('Failed to import configuration', err.message);
             }
-
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
-            });
-
-            this.loadConfig();
-            alert(`Imported ${instances.length} ${mode} instance(s).`);
         };
         input.click();
     },
 
     async exportConfig(mode) {
-        const resp = await fetch('/api/config');
-        const config = await resp.json();
-        const data = mode === 'server' ? config.servers : config.clients;
+        try {
+            const resp = await this.fetchWithError('/api/config');
+            const config = await resp.json();
+            const data = mode === 'server' ? config.servers : config.clients;
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `phantun-${mode}s-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `phantun-${mode}s-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.showSuccess(`Configuration exported successfully`);
+        } catch (err) {
+            console.error('Failed to export config:', err);
+            this.showError('Failed to export configuration', err.message);
+        }
     },
 
     // Logs
