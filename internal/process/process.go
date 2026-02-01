@@ -142,11 +142,13 @@ func (m *Manager) StopAll() {
 		}
 
 		// Cleanup iptables
-		if p.Type == "client" {
+		// Cleanup iptables
+		switch p.Type {
+		case "client":
 			if err := iptables.CleanupClient(p.ClientCfg); err != nil {
 				log.Printf("Failed to clean iptables for client %s: %v", id, err)
 			}
-		} else if p.Type == "server" {
+		case "server":
 			if err := iptables.CleanupServer(p.ServerCfg); err != nil {
 				log.Printf("Failed to clean iptables for server %s: %v", id, err)
 			}
@@ -290,4 +292,11 @@ func (m *Manager) GetStatus() []ProcessDTO {
 		})
 	}
 	return list
+}
+
+// CheckBinaries verifies if Phantun executables are present
+func (m *Manager) CheckBinaries() bool {
+	_, err1 := exec.LookPath("phantun_client")
+	_, err2 := exec.LookPath("phantun_server")
+	return err1 == nil && err2 == nil
 }

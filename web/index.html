@@ -12,7 +12,7 @@
 </head>
 
 <body>
-    <!-- Skip to Main Content (Accessibility) -->
+    <!-- Skip to Main Content -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Top Header -->
@@ -26,8 +26,7 @@
         </div>
         <div class="header-actions">
             <!-- Language Switcher -->
-            <button class="icon-btn" onclick="app.toggleLanguage()" title="Switch Language"
-                aria-label="Switch Language">
+            <button class="icon-btn" onclick="app.toggleLanguage()" title="Switch Language">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -37,10 +36,8 @@
                 </svg>
                 <span class="btn-lang-text">EN</span>
             </button>
-
             <!-- Theme Toggle -->
-            <button class="icon-btn" onclick="app.toggleTheme()" title="Toggle Theme" aria-label="Toggle Theme">
-                <!-- Sun Icon (shown in dark mode) -->
+            <button class="icon-btn" onclick="app.toggleTheme()" title="Toggle Theme">
                 <svg class="theme-icon theme-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -53,24 +50,20 @@
                     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                 </svg>
-                <!-- Moon Icon (shown in light mode) -->
                 <svg class="theme-icon theme-moon" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" style="display: none;">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-
-            <!-- GitHub Link -->
-            <a href="https://github.com/iHub-2020/phantun-docker" target="_blank" rel="noopener" class="icon-btn"
-                title="View on GitHub" aria-label="View on GitHub">
+            <!-- GitHub -->
+            <a href="https://github.com/iHub-2020/phantun-docker" target="_blank" class="icon-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path
                         d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
             </a>
-
             <!-- Logout -->
-            <a href="/logout" class="icon-btn" title="Logout" aria-label="Logout">
+            <a href="/logout" class="icon-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
@@ -80,8 +73,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content" id="main-content" role="main" aria-label="Dashboard and Configuration">
+    <main class="main-content" id="main-content">
         <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-info">
@@ -91,17 +83,25 @@
             </div>
         </div>
 
-        <!-- Page Tabs -->
-        <div class="page-tabs" role="tablist" aria-label="Page Navigation">
-            <button class="page-tab active" data-target="dashboardPage" role="tab" aria-selected="true"
-                aria-controls="dashboardPage">Dashboard</button>
-            <button class="page-tab" data-target="configPage" role="tab" aria-selected="false"
-                aria-controls="configPage">Configuration</button>
+        <!-- NEW: Page Tabs -->
+        <div class="page-tabs" role="tablist">
+            <button class="page-tab active" onclick="app.switchTab(this, 'dashboardPage')">Dashboard</button>
+            <button class="page-tab" onclick="app.switchTab(this, 'configPage')">Configuration</button>
+            <button class="page-tab" onclick="app.switchTab(this, 'statusPage')">Status</button>
         </div>
 
-        <!-- Dashboard Page -->
-        <div class="page-content active" id="dashboardPage" role="tabpanel" aria-labelledby="Dashboard">
-            <!-- Tunnel Status Table -->
+        <!-- PAGE 1: Dashboard -->
+        <div id="dashboardPage" class="page-content active">
+            <!-- Topology Map -->
+            <div class="config-section">
+                <div class="section-header">
+                    <div class="section-title">Network Topology</div>
+                </div>
+                <!-- Container for D3/SVG Visualization -->
+                <div id="topology-map"></div>
+            </div>
+
+            <!-- Tunnel List -->
             <div class="config-section">
                 <div class="section-header">
                     <div class="section-title">Tunnel Status</div>
@@ -116,75 +116,22 @@
                                     <th>Status</th>
                                     <th>Local</th>
                                     <th>Remote</th>
-                                    <th>TUN Address</th>
                                     <th>PID</th>
                                 </tr>
                             </thead>
                             <tbody id="tunnelStatusBody">
                                 <tr class="empty-row">
-                                    <td colspan="7">No tunnels configured.</td>
+                                    <td colspan="6">No tunnels configured.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <!-- System Diagnostics -->
-            <div class="config-section">
-                <div class="section-header">
-                    <div class="section-title">System Diagnostics</div>
-                </div>
-                <div class="section-body">
-                    <div class="diag-grid">
-                        <div class="diag-row">
-                            <span class="diag-label">Core Binary:</span>
-                            <span class="diag-value" id="diagBinary">
-                                <span class="status-icon">⏳</span>
-                                <span>Loading...</span>
-                            </span>
-                        </div>
-                        <div class="diag-row">
-                            <span class="diag-label">Iptables Rules:</span>
-                            <span class="diag-value" id="diagIptables">
-                                <span class="status-icon">⏳</span>
-                                <span>Loading...</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Live Logs -->
-            <div class="config-section">
-                <div class="section-header">
-                    <div class="section-title">Recent Logs</div>
-                    <div class="diag-timestamp">Last updated: <span id="logTimestamp">--:--:--</span></div>
-                </div>
-                <div class="section-body no-padding">
-                    <div class="log-container">
-                        <pre class="log-content" id="logContent"><span class="log-line">Waiting for logs...</span></pre>
-                    </div>
-                    <div class="log-actions">
-                        <button class="btn btn-outline btn-sm" onclick="app.toggleLogStream()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <polyline points="1 20 1 14 7 14"></polyline>
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                            <span id="logStreamBtn">Start Refresh</span>
-                        </button>
-                        <button class="btn btn-outline btn-sm" onclick="app.clearLogs()">Clear Logs</button>
-                        <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToBottom()">Scroll to
-                            Bottom</button>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Configuration Page -->
-        <div class="page-content" id="configPage" role="tabpanel" aria-labelledby="Configuration" aria-hidden="true">
+        <!-- PAGE 2: Configuration -->
+        <div id="configPage" class="page-content" style="display:none;">
             <!-- Safety Warning -->
             <div class="safety-card">
                 <div class="safety-title">
@@ -194,11 +141,9 @@
                     <span>Critical Safety Information</span>
                 </div>
                 <ul>
-                    <li>Phantun creates TUN interface and uses <strong>FakeTCP</strong> to disguise UDP traffic.</li>
-                    <li>Client Mode requires <strong>MASQUERADE iptables</strong> rules (auto-enabled).</li>
-                    <li>Server Mode requires <strong>DNAT iptables</strong> rules (auto-enabled).</li>
-                    <li>Without iptables - Phantun relies on kernel's native processing and is less stable.</li>
-                    <li>MTU must be reduced by <strong>12 bytes</strong> (TCP header - UDP header).</li>
+                    <li>Phantun uses <strong>FakeTCP</strong>. MTU must be reduced by <strong>12 bytes</strong>.</li>
+                    <li>Client requires <strong>MASQUERADE</strong> rules. Server requires <strong>DNAT</strong> rules.
+                    </li>
                 </ul>
             </div>
 
@@ -206,22 +151,21 @@
             <div class="config-section">
                 <div class="section-header">
                     <div class="section-title">Global Settings</div>
-                    <p class="section-desc">Phantun守护进程的全局设置。</p>
                 </div>
                 <div class="section-body no-padding">
                     <div class="settings-form">
                         <div class="setting-row">
                             <label class="setting-label">Enable Service</label>
                             <div class="setting-control">
-                                <input type="checkbox" class="checkbox" id="enableService" checked>
-                                <span class="setting-hint">ⓘ Master switch. If disabled, no tunnels will run.</span>
+                                <input type="checkbox" class="checkbox" id="enableService">
+                                <span class="setting-hint">Master switch.</span>
                             </div>
                         </div>
                         <div class="setting-row">
                             <label class="setting-label">Log Level</label>
                             <div class="setting-control">
                                 <select class="form-select" id="logLevel">
-                                    <option value="info">Info (Default)</option>
+                                    <option value="info">Info</option>
                                     <option value="debug">Debug</option>
                                     <option value="error">Error</option>
                                 </select>
@@ -235,19 +179,18 @@
             <div class="config-section">
                 <div class="section-header">
                     <div class="section-title">Server Instances</div>
-                    <p class="section-desc">Server Mode: OpenWrt listens for connections from remote clients.</p>
                 </div>
                 <div class="section-body no-padding">
                     <div class="table-wrapper">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 20%">Name</th>
-                                    <th style="width: 10%">Enabled</th>
-                                    <th style="width: 15%">TCP Port</th>
-                                    <th style="width: 20%">Forward IP</th>
-                                    <th style="width: 15%">Forward Port</th>
-                                    <th style="width: 20%">Actions</th>
+                                    <th>Name</th>
+                                    <th>Enabled</th>
+                                    <th>TCP Port</th>
+                                    <th>Forward IP</th>
+                                    <th>Forward Port</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="serverTableBody">
@@ -259,33 +202,10 @@
                     </div>
                     <div class="table-footer">
                         <div class="btn-group-left">
-                            <button class="btn btn-outline btn-sm" onclick="app.importConfig('server')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Import
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="app.exportConfig('server')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                Export
-                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="app.importConfig('server')">Import</button>
+                            <button class="btn btn-outline btn-sm" onclick="app.exportConfig('server')">Export</button>
                         </div>
-                        <button class="btn-add" onclick="app.openAddModal('server')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Server
-                        </button>
+                        <button class="btn-add" onclick="app.openAddModal('server')">Add Server</button>
                     </div>
                 </div>
             </div>
@@ -294,19 +214,18 @@
             <div class="config-section">
                 <div class="section-header">
                     <div class="section-title">Client Instances</div>
-                    <p class="section-desc">Client Mode: OpenWrt connects to remote Phantun server (VPS).</p>
                 </div>
                 <div class="section-body no-padding">
                     <div class="table-wrapper">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 20%">Name</th>
-                                    <th style="width: 10%">Enabled</th>
-                                    <th style="width: 20%">Server Address</th>
-                                    <th style="width: 15%">Server Port</th>
-                                    <th style="width: 15%">Local UDP Port</th>
-                                    <th style="width: 20%">Actions</th>
+                                    <th>Name</th>
+                                    <th>Enabled</th>
+                                    <th>Server Addr</th>
+                                    <th>Server Port</th>
+                                    <th>Local Port</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="clientTableBody">
@@ -318,122 +237,161 @@
                     </div>
                     <div class="table-footer">
                         <div class="btn-group-left">
-                            <button class="btn btn-outline btn-sm" onclick="app.importConfig('client')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Import
-                            </button>
-                            <button class="btn btn-outline btn-sm" onclick="app.exportConfig('client')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                Export
-                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="app.importConfig('client')">Import</button>
+                            <button class="btn btn-outline btn-sm" onclick="app.exportConfig('client')">Export</button>
                         </div>
-                        <button class="btn-add" onclick="app.openAddModal('client')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Client
-                        </button>
+                        <button class="btn-add" onclick="app.openAddModal('client')">Add Client</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Actions -->
             <div class="action-bar">
                 <button class="btn btn-primary" onclick="app.saveAndApply()">Save & Apply</button>
                 <button class="btn btn-secondary" onclick="app.saveOnly()">Save Only</button>
                 <button class="btn btn-outline" onclick="app.resetConfigWithConfirm()">Reset</button>
             </div>
         </div>
+
+        <!-- PAGE 3: Status (Moved Here) -->
+        <div id="statusPage" class="page-content" style="display:none;">
+            <!-- System Diagnostics -->
+            <div class="config-section">
+                <div class="section-header">
+                    <div class="section-title">System Diagnostics</div>
+                </div>
+                <div class="section-body">
+                    <div class="diag-grid">
+                        <div class="diag-row">
+                            <span class="diag-label">Core Binary:</span>
+                            <span class="diag-value" id="diagBinary"><span class="status-icon">⏳</span>
+                                Loading...</span>
+                        </div>
+                        <div class="diag-row">
+                            <span class="diag-label">Iptables Rules:</span>
+                            <span class="diag-value" id="diagIptables"><span class="status-icon">⏳</span>
+                                Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div class="config-section">
+                <div class="section-header">
+                    <div class="section-title">System Logs</div>
+                    <div class="diag-timestamp">Last: <span id="logTimestamp">--:--:--</span></div>
+                </div>
+                <div class="section-body no-padding">
+                    <div class="log-container">
+                        <pre class="log-content" id="logContent"><span class="log-line">Waiting for logs...</span></pre>
+                    </div>
+                    <div class="log-actions">
+                        <button class="btn btn-outline btn-sm" onclick="app.toggleLogStream()"><span
+                                id="logStreamBtn">Start Stream</span></button>
+                        <button class="btn btn-outline btn-sm" onclick="app.clearLogs()">Clear</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToBottom()">Scroll Bottom</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <!-- Edit Modal -->
-    <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <!-- Modal with Advanced Settings -->
+    <div class="modal-overlay" id="editModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title" id="editModalTitle">New Instance</span>
-                <button class="modal-close" onclick="app.closeModal('editModal')" aria-label="Close modal">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+                <span class="modal-title" id="editModalTitle">Edit Instance</span>
+                <button class="modal-close" onclick="app.closeModal('editModal')">✕</button>
             </div>
             <div class="modal-body">
+                <!-- Basic Fields -->
                 <div class="form-row">
                     <label class="form-label">Enable</label>
-                    <div class="form-control-wrapper">
-                        <input type="checkbox" class="checkbox" id="editEnable" checked>
-                    </div>
+                    <div class="form-control-wrapper"><input type="checkbox" class="checkbox" id="editEnable"></div>
                 </div>
                 <div class="form-row">
                     <label class="form-label">Alias</label>
-                    <div class="form-control-wrapper">
-                        <input type="text" class="form-control" id="editAlias" placeholder="My Tunnel">
-                    </div>
+                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editAlias"
+                            placeholder="Name"></div>
                 </div>
-                <!-- Server Mode Fields -->
+
+                <!-- Server Fields -->
                 <div class="form-row server-field">
                     <label class="form-label">TCP Listen Port</label>
-                    <div class="form-control-wrapper">
-                        <input type="number" class="form-control" id="editServerPort" placeholder="4567">
-                    </div>
+                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editServerPort"
+                            placeholder="4567"></div>
                 </div>
                 <div class="form-row server-field">
-                    <label class="form-label">Forward To IP</label>
-                    <div class="form-control-wrapper">
-                        <input type="text" class="form-control" id="editForwardIp" placeholder="127.0.0.1">
-                    </div>
+                    <label class="form-label">Forward IP</label>
+                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editForwardIp"
+                            placeholder="127.0.0.1"></div>
                 </div>
                 <div class="form-row server-field">
-                    <label class="form-label">Forward To Port</label>
-                    <div class="form-control-wrapper">
-                        <input type="number" class="form-control" id="editForwardPort" placeholder="51820">
-                    </div>
+                    <label class="form-label">Forward Port</label>
+                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editForwardPort"
+                            placeholder="51820"></div>
                 </div>
-                <!-- Client Mode Fields -->
+
+                <!-- Client Fields -->
                 <div class="form-row client-field" style="display:none;">
                     <label class="form-label">Server Address</label>
-                    <div class="form-control-wrapper">
-                        <input type="text" class="form-control" id="editRemoteAddr" placeholder="1.2.3.4">
-                    </div>
+                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editRemoteAddr"
+                            placeholder="1.2.3.4"></div>
                 </div>
                 <div class="form-row client-field" style="display:none;">
                     <label class="form-label">Server Port</label>
-                    <div class="form-control-wrapper">
-                        <input type="number" class="form-control" id="editRemotePort" placeholder="4567">
-                    </div>
+                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editRemotePort"
+                            placeholder="4567"></div>
                 </div>
                 <div class="form-row client-field" style="display:none;">
                     <label class="form-label">Local UDP Port</label>
-                    <div class="form-control-wrapper">
-                        <input type="number" class="form-control" id="editLocalPort" placeholder="51820">
-                    </div>
+                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editLocalPort"
+                            placeholder="51820"></div>
                 </div>
-                <!-- Common Fields -->
+
+                <!-- Common TUN Fields -->
                 <div class="form-row">
                     <label class="form-label">TUN Local IP</label>
-                    <div class="form-control-wrapper">
-                        <input type="text" class="form-control" id="editTunLocal" placeholder="192.168.200.2">
-                    </div>
+                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editTunLocal"
+                            placeholder="192.168.200.2"></div>
                 </div>
                 <div class="form-row">
                     <label class="form-label">TUN Peer IP</label>
-                    <div class="form-control-wrapper">
-                        <input type="text" class="form-control" id="editTunPeer" placeholder="192.168.200.1">
+                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editTunPeer"
+                            placeholder="192.168.200.1"></div>
+                </div>
+
+                <!-- NEW: Advanced Settings Accordion -->
+                <div class="advanced-settings">
+                    <div class="advanced-trigger"
+                        onclick="document.getElementById('advancedContent').classList.toggle('hidden')">
+                        <span>▶ Advanced Settings (IPv6, Handshake)</span>
+                    </div>
+                    <div class="advanced-content hidden" id="advancedContent">
+                        <div class="form-row">
+                            <label class="form-label">TUN Name (Optional)</label>
+                            <div class="form-control-wrapper"><input type="text" class="form-control" id="editTunName"
+                                    placeholder="tun0"></div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">TUN Local IPv6</label>
+                            <div class="form-control-wrapper"><input type="text" class="form-control"
+                                    id="editTunLocalIPv6" placeholder="fcc8::2"></div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">TUN Peer IPv6</label>
+                            <div class="form-control-wrapper"><input type="text" class="form-control"
+                                    id="editTunPeerIPv6" placeholder="fcc8::1"></div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Handshake File</label>
+                            <div class="form-control-wrapper"><input type="text" class="form-control"
+                                    id="editHandshakeFile" placeholder="/etc/phantun/handshake.bin"></div>
+                        </div>
                     </div>
                 </div>
+
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="app.closeModal('editModal')">Close</button>
@@ -443,6 +401,8 @@
         </div>
     </div>
 
+    <!-- SCRIPTS -->
+    <script src="/static/js/topology.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 

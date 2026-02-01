@@ -35,6 +35,7 @@ func (h *Handler) handleStatus(w http.ResponseWriter, r *http.Request) {
 	status := map[string]interface{}{
 		"enabled":   h.Config.General.Enabled,
 		"system":    "running",
+		"binary_ok": h.Manager.CheckBinaries(),
 		"processes": h.Manager.GetStatus(),
 	}
 	json.NewEncoder(w).Encode(status)

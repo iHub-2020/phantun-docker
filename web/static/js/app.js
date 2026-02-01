@@ -35,12 +35,17 @@ const app = {
     logStreaming: false,
 
     init() {
-        this.setupTabs();
+        // this.setupTabs(); // Removed, using inline onclick
         this.loadConfig();
         this.loadStatus();
-        this.checkDiagnostics();
+        this.updateDiagnostics({}); // Init diagnostics empty
+
         // Auto-refresh status every 5s
         setInterval(() => this.loadStatus(), CONFIG.STATUS_POLL_INTERVAL);
+
+        // Initial Theme
+        if (typeof this.initTheme === 'function') this.initTheme();
+
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => this.cleanup());
     },
@@ -94,40 +99,49 @@ const app = {
         }
     },
 
-    setupTabs() {
-        document.querySelectorAll('.page-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                // Update tabs
-                document.querySelectorAll('.page-tab').forEach(t => {
-                    t.classList.remove('active');
-                    t.setAttribute('aria-selected', 'false');
-                });
-
-                // Update panels
-                document.querySelectorAll('.page-content').forEach(c => {
-                    c.classList.remove('active');
-                    c.setAttribute('aria-hidden', 'true');
-                });
-
-                // Activate selected
-                e.target.classList.add('active');
-                e.target.setAttribute('aria-selected', 'true');
-
-                const panel = document.getElementById(e.target.dataset.target);
-                panel.classList.add('active');
-                panel.setAttribute('aria-hidden', 'false');
-            });
+    switchTab(btn, targetId) {
+        // Deactivate all
+        document.querySelectorAll('.page-tab').forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
         });
+        document.querySelectorAll('.page-content').forEach(c => {
+            c.classList.remove('active');
+            c.style.display = 'none'; // Ensure hidden
+            c.setAttribute('aria-hidden', 'true');
+        });
+
+        // Activate target
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.style.display = 'block';
+            setTimeout(() => target.classList.add('active'), 10); // Fade in
+            target.setAttribute('aria-hidden', 'false');
+
+            // Special handling for Dashboard Topology
+            if (targetId === 'dashboardPage' && typeof topology !== 'undefined') {
+                if (this.lastConfig) topology.render(this.lastConfig);
+                else this.loadConfig();
+            }
+        }
     },
 
     async loadConfig() {
         try {
             const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
+            this.lastConfig = config;
             this.renderServers(config.servers || []);
             this.renderClients(config.clients || []);
             document.getElementById('enableService').checked = config.general?.enabled !== false;
             document.getElementById('logLevel').value = config.general?.log_level || 'info';
+
+            // Render Topology if available
+            if (typeof topology !== 'undefined') {
+                topology.render(config);
+            }
         } catch (err) {
             console.error('Failed to load config:', err);
             this.showError('Failed to load configuration', err.message);
@@ -140,9 +154,14 @@ const app = {
             const status = await resp.json();
             this.updateServiceStatus(status);
             this.updateTunnelStatus(status.processes || []);
+            this.updateDiagnostics(status); // Pass status to diagnostics
+
+            // Update Topology Animation
+            if (typeof topology !== 'undefined') {
+                topology.updateStatus(status.processes || []);
+            }
         } catch (err) {
             console.error('Failed to load status:', err);
-            // Don't show error for status polling to avoid spam
         }
     },
 
@@ -181,20 +200,20 @@ const app = {
         `).join('');
     },
 
-    async checkDiagnostics() {
+    async updateDiagnostics(status) {
         const diagBinary = document.getElementById('diagBinary');
         const diagIptables = document.getElementById('diagIptables');
 
-        try {
-            const resp = await this.fetchWithError(CONFIG.API.STATUS);
-            const data = await resp.json();
-
-            // Core Binary Status
-            diagBinary.innerHTML = data.binary_ok ?
+        // Check Binary Status (from status payload or default)
+        if (status && typeof status.binary_ok !== 'undefined') {
+            diagBinary.innerHTML = status.binary_ok ?
                 '<span class="status-icon">✓</span><span>Phantun binaries found</span>' :
-                '<span class="status-icon">✗</span><span>Phantun binaries missing</span>';
+                '<span class="status-icon" style="color:var(--accent-error)">✗</span><span>Phantun binaries missing</span>';
+        }
 
-            // Iptables Status
+        // Check Iptables (fetch separately as it's not in regular status)
+        // We throttle this or just run it. For now, run it.
+        try {
             const iptablesResp = await this.fetchWithError(CONFIG.API.IPTABLES);
             const iptables = await iptablesResp.json();
             const count = (iptables.rules || []).length;
@@ -202,8 +221,7 @@ const app = {
                 `<span class="status-icon">✓</span><span>${count} rules active</span>` :
                 '<span class="status-icon">⚠</span><span>No rules configured</span>';
         } catch (err) {
-            console.error('Diagnostics check failed:', err);
-            this.showError('Failed to run diagnostics', err.message);
+            console.warn('Iptables check failed:', err);
         }
     },
 
@@ -280,6 +298,12 @@ const app = {
             document.getElementById('editTunLocal').value = data.tun_local || '';
             document.getElementById('editTunPeer').value = data.tun_peer || '';
 
+            // Advanced Fields
+            document.getElementById('editTunName').value = data.tun_name || '';
+            document.getElementById('editTunLocalIPv6').value = data.tun_local_ipv6 || '';
+            document.getElementById('editTunPeerIPv6').value = data.tun_peer_ipv6 || '';
+            document.getElementById('editHandshakeFile').value = data.handshake_file || '';
+
             if (mode === 'server') {
                 document.getElementById('editServerPort').value = data.server_port || '';
                 document.getElementById('editForwardIp').value = data.forward_ip || '';
@@ -320,6 +344,13 @@ const app = {
         document.getElementById('editLocalPort').value = '';
         document.getElementById('editTunLocal').value = '';
         document.getElementById('editTunPeer').value = '';
+
+        // Advanced
+        document.getElementById('editTunName').value = '';
+        document.getElementById('editTunLocalIPv6').value = '';
+        document.getElementById('editTunPeerIPv6').value = '';
+        document.getElementById('editHandshakeFile').value = '';
+        document.getElementById('advancedContent').classList.add('hidden');
     },
 
     async saveInstance() {
@@ -331,13 +362,18 @@ const app = {
                 enabled: document.getElementById('editEnable').checked,
                 alias: document.getElementById('editAlias').value,
                 tun_local: document.getElementById('editTunLocal').value,
-                tun_peer: document.getElementById('editTunPeer').value
+                tun_peer: document.getElementById('editTunPeer').value,
+                // Advanced
+                tun_name: document.getElementById('editTunName').value,
+                tun_local_ipv6: document.getElementById('editTunLocalIPv6').value,
+                tun_peer_ipv6: document.getElementById('editTunPeerIPv6').value,
+                handshake_file: document.getElementById('editHandshakeFile').value
             };
 
             if (this.currentMode === 'server') {
-                instance.server_port = parseInt(document.getElementById('editServerPort').value);
+                instance.server_port = document.getElementById('editServerPort').value;
                 instance.forward_ip = document.getElementById('editForwardIp').value;
-                instance.forward_port = parseInt(document.getElementById('editForwardPort').value);
+                instance.forward_port = document.getElementById('editForwardPort').value;
 
                 if (this.editingIndex !== null) {
                     config.servers[this.editingIndex] = instance;
@@ -347,8 +383,8 @@ const app = {
                 }
             } else {
                 instance.remote_addr = document.getElementById('editRemoteAddr').value;
-                instance.remote_port = parseInt(document.getElementById('editRemotePort').value);
-                instance.local_port = parseInt(document.getElementById('editLocalPort').value);
+                instance.remote_port = document.getElementById('editRemotePort').value;
+                instance.local_port = document.getElementById('editLocalPort').value;
 
                 if (this.editingIndex !== null) {
                     config.clients[this.editingIndex] = instance;

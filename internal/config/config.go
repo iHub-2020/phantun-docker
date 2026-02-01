@@ -14,29 +14,35 @@ type GeneralConfig struct {
 
 // ClientConfig holds Phantun Client settings
 type ClientConfig struct {
-	ID         string `json:"id"` // Unique ID for management
-	Alias      string `json:"alias"`
-	Enabled    bool   `json:"enabled"`
-	LocalAddr  string `json:"local_addr"`
-	LocalPort  string `json:"local_port"`
-	RemoteAddr string `json:"remote_addr"`
-	RemotePort string `json:"remote_port"`
-	TunLocal   string `json:"tun_local"`
-	TunPeer    string `json:"tun_peer"`
-	TunName    string `json:"tun_name,omitempty"`
+	ID            string `json:"id"` // Unique ID for management
+	Alias         string `json:"alias"`
+	Enabled       bool   `json:"enabled"`
+	LocalAddr     string `json:"local_addr"`
+	LocalPort     string `json:"local_port"`
+	RemoteAddr    string `json:"remote_addr"`
+	RemotePort    string `json:"remote_port"`
+	TunLocal      string `json:"tun_local"`
+	TunPeer       string `json:"tun_peer"`
+	TunLocalIPv6  string `json:"tun_local_ipv6,omitempty"`
+	TunPeerIPv6   string `json:"tun_peer_ipv6,omitempty"`
+	TunName       string `json:"tun_name,omitempty"`
+	HandshakeFile string `json:"handshake_file,omitempty"`
 }
 
 // ServerConfig holds Phantun Server settings
 type ServerConfig struct {
-	ID         string `json:"id"`
-	Alias      string `json:"alias"`
-	Enabled    bool   `json:"enabled"`
-	LocalPort  string `json:"local_port"`
-	RemoteAddr string `json:"remote_addr"`
-	RemotePort string `json:"remote_port"`
-	TunLocal   string `json:"tun_local"`
-	TunPeer    string `json:"tun_peer"`
-	TunName    string `json:"tun_name,omitempty"`
+	ID            string `json:"id"`
+	Alias         string `json:"alias"`
+	Enabled       bool   `json:"enabled"`
+	LocalPort     string `json:"local_port"`
+	RemoteAddr    string `json:"remote_addr"`
+	RemotePort    string `json:"remote_port"`
+	TunLocal      string `json:"tun_local"`
+	TunPeer       string `json:"tun_peer"`
+	TunLocalIPv6  string `json:"tun_local_ipv6,omitempty"`
+	TunPeerIPv6   string `json:"tun_peer_ipv6,omitempty"`
+	TunName       string `json:"tun_name,omitempty"`
+	HandshakeFile string `json:"handshake_file,omitempty"`
 }
 
 // Config represents the application configuration
