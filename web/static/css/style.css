@@ -1482,3 +1482,98 @@ button[aria-busy="true"]::after {
         transform: translateY(0);
     }
 }
+/* ===== HEADER TOOLBAR ENHANCEMENTS ===== */
+
+/* Language Button Text */
+.btn-lang-text {
+    margin-left: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+}
+
+/* Theme Toggle Icons */
+.theme-icon {
+    transition: transform var(--transition-base), opacity var(--transition-base);
+}
+
+.icon-btn:hover .theme-icon {
+    transform: rotate(15deg);
+}
+
+/* Icon Button Enhancements */
+.header-actions .icon-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.header-actions .icon-btn svg {
+    flex-shrink: 0;
+}
+
+/* GitHub Link Hover */
+.header-actions a.icon-btn:hover svg {
+    color: var(--accent-success);
+}
+
+/* Light Theme Styles */
+[data-theme="light"] {
+    --bg-body: #F1F5F9;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F8FAFC;
+    --bg-input: #F8FAFC;
+    --bg-header: #FFFFFF;
+    --bg-modal-overlay: rgba(15, 23, 42, 0.6);
+    --bg-elevated: #FFFFFF;
+    
+    --border: #E2E8F0;
+    --border-light: #CBD5E1;
+    
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --text-disabled: #94A3B8;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .theme-sun {
+    display: none;
+}
+
+[data-theme="light"] .theme-moon {
+    display: block !important;
+}
+
+[data-theme="light"] .top-header {
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .config-section {
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .data-table tbody tr:hover {
+    background: var(--bg-card-hover);
+}
+
+[data-theme="light"] .login-background {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Smooth Theme Transition */
+* {
+    transition-property: background-color, border-color, color;
+    transition-duration: var(--transition-base);
+    transition-timing-function: ease;
+}
+
+*:where(:not(svg, svg *)) {
+    transition-property: background-color, border-color, color, box-shadow;
+}

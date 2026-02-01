@@ -595,8 +595,111 @@ const app = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    // ===== HEADER TOOLBAR FUNCTIONS =====
+
+    toggleLanguage() {
+        const currentLang = localStorage.getItem('lang') || 'en';
+        const newLang = currentLang === 'en' ? 'zh' : 'en';
+        localStorage.setItem('lang', newLang);
+
+        // Update button text
+        const langText = document.querySelector('.btn-lang-text');
+        if (langText) {
+            langText.textContent = newLang.toUpperCase();
+        }
+
+        // Apply translations
+        this.applyTranslations(newLang);
+        this.showSuccess(`Language switched to ${newLang === 'en' ? 'English' : '中文'}`);
+    },
+
+    toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        this.showSuccess(`Theme switched to ${newTheme} mode`);
+    },
+
+    applyTranslations(lang) {
+        const translations = {
+            en: {
+                'Phantun Manager': 'Phantun Manager',
+                'Dashboard': 'Dashboard',
+                'Configuration': 'Configuration',
+                'Service Status:': 'Service Status:',
+                'Tunnel Status': 'Tunnel Status',
+                'System Diagnostics': 'System Diagnostics',
+                'Recent Logs': 'Recent Logs',
+                'Global Settings': 'Global Settings',
+                'Server Instances': 'Server Instances',
+                'Client Instances': 'Client Instances',
+                'Save & Apply': 'Save & Apply',
+                'Save Only': 'Save Only',
+                'Reset': 'Reset',
+                'Logout': 'Logout'
+            },
+            zh: {
+                'Phantun Manager': 'Phantun 管理器',
+                'Dashboard': '仪表板',
+                'Configuration': '配置',
+                'Service Status:': '服务状态：',
+                'Tunnel Status': '隧道状态',
+                'System Diagnostics': '系统诊断',
+                'Recent Logs': '最近日志',
+                'Global Settings': '全局设置',
+                'Server Instances': '服务端实例',
+                'Client Instances': '客户端实例',
+                'Save & Apply': '保存并应用',
+                'Save Only': '仅保存',
+                'Reset': '重置',
+                'Logout': '退出登录'
+            }
+        };
+
+        const t = translations[lang];
+
+        // Apply translations to common elements
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key]) {
+                el.textContent = t[key];
+            }
+        });
+
+        // Update specific elements by selector
+        const updateText = (sel, key) => {
+            const el = document.querySelector(sel);
+            if (el && t[key]) el.textContent = t[key];
+        };
+
+        updateText('.header-title', 'Phantun Manager');
+        updateText('[data-target="dashboardPage"]', 'Dashboard');
+        updateText('[data-target="configPage"]', 'Configuration');
+    },
+
+    initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedLang = localStorage.getItem('lang') || 'en';
+
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        const langText = document.querySelector('.btn-lang-text');
+        if (langText) {
+            langText.textContent = savedLang.toUpperCase();
+        }
+
+        this.applyTranslations(savedLang);
     }
 };
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => app.init());
+document.addEventListener('DOMContentLoaded', () => {
+    app.initTheme();
+    app.init();
+});
