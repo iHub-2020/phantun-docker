@@ -82,17 +82,94 @@ func GetRules() (string, error) {
 	return string(out), nil
 }
 
-// GetStats returns a summary string of active rules
-func GetStats() (string, error) {
+// CleanupAll removes ALL rules created by Phantun (marked with comment "phantun")
+// This implements the "Clean Slate" strategy.
+func CleanupAll() error {
+	// 1. Get all rules
+	saveCmd := exec.Command("iptables-save")
+	out, err := saveCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to list rules: %w", err)
+	}
+
+	lines := strings.Split(string(out), "\n")
+	var commands [][]string
+
+	// 2. Parse lines to find Phantun rules
+	for _, line := range lines {
+		// Example line: -A POSTROUTING -s 192.168.200.1/32 -m comment --comment "phantun" -j MASQUERADE
+		if strings.Contains(line, "--comment \"phantun\"") {
+			// We only care about MASQUERADE and DNAT for now, to be safe
+			if strings.Contains(line, "-j MASQUERADE") || strings.Contains(line, "-j DNAT") {
+				// Convert "-A" to "-D"
+				// iptables-save output is like: -A CHAIN ...
+				// We need to construct: iptables -t nat -D CHAIN ...
+
+				// Basic parsing:
+				// Line starts with -A <CHAIN> <ARGS...>
+				// We want: -D <CHAIN> <ARGS...>
+
+				parts := strings.Fields(line)
+				if len(parts) < 3 || parts[0] != "-A" {
+					continue
+				}
+
+				// Reconstruct args for deletion
+				// Note: iptables-save output usually doesn't include table name in the line,
+				// it's in the *nat header. We assume these are NAT rules because we only use NAT.
+
+				// Replace -A with -D
+				parts[0] = "-D"
+				commands = append(commands, parts)
+			}
+		}
+	}
+
+	// 3. Execute deletions
+	for _, cmdArgs := range commands {
+		// Prepend "-t nat" assuming all our rules are in nat table
+		fullArgs := append([]string{"-t", "nat"}, cmdArgs...)
+
+		fmt.Printf("Cleaning rule: iptables %s\n", strings.Join(fullArgs, " "))
+
+		cmd := exec.Command("iptables", fullArgs...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			log.Printf("Failed to delete rule: %v, output: %s", err, string(out))
+			// Continue cleaning others
+		}
+	}
+
+	return nil
+}
+
+// GetStats returns a map of rule counts
+func GetStats() (map[string]int, error) {
 	rules, err := GetRules()
 	if err != nil {
-		return "Error checking iptables", err
+		return nil, err
 	}
-	masq := strings.Count(rules, "MASQUERADE")
-	dnat := strings.Count(rules, "DNAT")
-	total := masq + dnat
-	if total == 0 {
-		return "Inactive (No rules found)", nil
+
+	// We count lines that contain our marker tag
+	// Logic: Split by newline -> filter "comment phantun" -> count MASQUERADE/DNAT
+	lines := strings.Split(rules, "\n")
+	masq := 0
+	dnat := 0
+
+	for _, line := range lines {
+		if strings.Contains(line, "phantun") {
+			if strings.Contains(line, "MASQUERADE") {
+				masq++
+			}
+			if strings.Contains(line, "DNAT") {
+				dnat++
+			}
+		}
 	}
-	return fmt.Sprintf("Active (%d rules: MASQUERADE, DNAT)", total), nil
+
+	stats := map[string]int{
+		"masquerade": masq,
+		"dnat":       dnat,
+	}
+	stats["total"] = stats["masquerade"] + stats["dnat"]
+	return stats, nil
 }

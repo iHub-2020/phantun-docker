@@ -1757,3 +1757,50 @@ body.login-page {
 .iface-line:last-child {
     margin-bottom: 0;
 }
+/* Diagnostics Grid */
+.diag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.diag-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-header {
+    background: var(--bg-elevated);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.data-table.dense th,
+.data-table.dense td {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.data-table.dense th {
+    background: rgba(0,0,0,0.2);
+}
+
+.mono {
+    font-family: var(--font-mono);
+}
+
+.bold {
+    font-weight: 600;
+}
+
+.text-xs {
+    font-size: 11px;
+}

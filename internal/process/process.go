@@ -144,21 +144,17 @@ func (m *Manager) StopAll() {
 		if p.Cmd.Process != nil {
 			p.Cmd.Process.Signal(syscall.SIGTERM)
 		}
-
-		// Cleanup iptables
-		// Cleanup iptables
-		switch p.Type {
-		case "client":
-			if err := iptables.CleanupClient(p.ClientCfg); err != nil {
-				log.Printf("Failed to clean iptables for client %s: %v", id, err)
-			}
-		case "server":
-			if err := iptables.CleanupServer(p.ServerCfg); err != nil {
-				log.Printf("Failed to clean iptables for server %s: %v", id, err)
-			}
-		}
-
+		// Note: We don't cleanup individual rules here anymore.
+		// We rely on the global strategy.
 		delete(m.processes, id)
+	}
+
+	// FORCE CLEANUP: Strict Policy
+	// When stopping all, we must sanitize the firewall environment.
+	if err := iptables.CleanupAll(); err != nil {
+		log.Printf("Error during forced cleanup: %v", err)
+	} else {
+		log.Println("Global firewall cleanup executed.")
 	}
 }
 
@@ -167,10 +163,34 @@ func (m *Manager) StartAll() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	// 1. Check Global Switch
 	if !m.cfg.General.Enabled {
 		log.Println("Global switch disabled. Skipping start.")
+		// Firewall rules are already cleaned by StopAll or Main Init.
 		return nil
 	}
+
+	// 2. Count Active Instances
+	activeCount := 0
+	for _, client := range m.cfg.Clients {
+		if client.Enabled {
+			activeCount++
+		}
+	}
+	for _, server := range m.cfg.Servers {
+		if server.Enabled {
+			activeCount++
+		}
+	}
+
+	// 3. Check Effective Instances
+	if activeCount == 0 {
+		log.Println("No enabled instances found. Skipping start.")
+		return nil
+	}
+
+	// 4. Proceed with Startup
+	log.Printf("Starting %d active instances...", activeCount)
 
 	for _, client := range m.cfg.Clients {
 		if client.Enabled {

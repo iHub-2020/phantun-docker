@@ -21,6 +21,7 @@ import (
 
 	"phantun-docker/internal/api"
 	"phantun-docker/internal/config"
+	"phantun-docker/internal/iptables"
 	"phantun-docker/internal/process"
 )
 
@@ -45,17 +46,26 @@ func main() {
 		cfg = config.DefaultConfig()
 	}
 
-	// 2. Initialize Process Manager
+	// 2. Initialize Dependencies
 	mgr := process.NewManager(cfg)
+	apiHandler := api.NewHandler(cfg, mgr)
 
-	// 3. Start Processes
+	// STRICT LOGIC: Sanitize environment on startup
+	// We must remove ANY / ALL rules created by previous runs (crashes, restarts)
+	log.Println("Performing startup cleanup...")
+	if err := iptables.CleanupAll(); err != nil {
+		log.Printf("[WARNING] Startup cleanup failed: %v", err)
+	} else {
+		log.Println("Startup cleanup completed. Environment sanitized.")
+	}
+
+	// 3. Start Processes (if enabled)
 	if err := mgr.StartAll(); err != nil {
-		log.Printf("Error starting processes: %v", err)
+		log.Fatalf("Failed to start processes: %v", err)
 	}
 	defer mgr.StopAll() // Cleanup on exit
 
 	// 4. Initialize API
-	apiHandler := api.NewHandler(cfg, mgr)
 	mux := http.NewServeMux()
 	apiHandler.RegisterRoutes(mux)
 
@@ -93,7 +103,7 @@ func main() {
 	// 6. Start HTTP/HTTPS Server
 	certFile := "/etc/phantun/cert.pem"
 	keyFile := "/etc/phantun/key.pem"
-	
+
 	// Simple check if certs exist
 	useTLS := false
 	if _, err := os.Stat(certFile); err == nil {

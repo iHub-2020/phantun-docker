@@ -207,40 +207,67 @@ const app = {
         }
         const d = status.diagnostics;
 
-        // 1. Binaries with MD5
-        const diagBinary = document.getElementById('diagBinary');
-        const binOk = d.binaries?.ok;
-        const cHash = d.binaries?.client || '?';
-        const sHash = d.binaries?.server || '?';
-        const binText = binOk
-            ? `Verified (Client: ${cHash}, Server: ${sHash})`
-            : '<span class="text-danger">Binaries Verification Failed</span>';
-        const binIcon = binOk ? '✓' : '✗';
-        const binClass = binOk ? 'text-success' : 'text-danger';
+        // 1. Binaries
+        const tbodyBin = document.getElementById('diagBinariesBody');
+        const binClient = d.binaries?.client || 'missing';
+        const binServer = d.binaries?.server || 'missing';
+        // Check if both present (simple check, or use d.binaries.ok)
 
-        diagBinary.innerHTML = `<span class="${binClass}"><span class="status-icon">${binIcon}</span> ${binText}</span>`;
+        tbodyBin.innerHTML = `
+            <tr>
+                <td>Client Binary</td>
+                <td>${binClient !== 'missing' ? '<span class="status-badge running">Present</span>' : '<span class="status-badge stopped">Missing</span>'}</td>
+                <td class="text-mono">${binClient !== 'missing' ? this.escapeHtml(binClient) : '-'}</td>
+            </tr>
+            <tr>
+                <td>Server Binary</td>
+                <td>${binServer !== 'missing' ? '<span class="status-badge running">Present</span>' : '<span class="status-badge stopped">Missing</span>'}</td>
+                <td class="text-mono">${binServer !== 'missing' ? this.escapeHtml(binServer) : '-'}</td>
+            </tr>
+        `;
 
-        // 2. Network Interfaces
-        const diagInterfaces = document.getElementById('diagInterfaces');
+        // 2. Interfaces
+        const tbodyIf = document.getElementById('diagInterfacesBody');
         const ifaces = d.interfaces || [];
         if (ifaces.length === 0) {
-            diagInterfaces.innerHTML = '<span class="text-muted">No TUN interfaces found</span>';
+            tbodyIf.innerHTML = '<tr><td colspan="3" class="text-muted" style="text-align:center;">No TUN interfaces found</td></tr>';
         } else {
-            diagInterfaces.innerHTML = ifaces.map(i => {
-                const color = i.status === 'UP' ? 'text-success' : 'text-danger';
-                const addr = i.addrs && i.addrs.length > 0 ? i.addrs.join(', ') : 'No IP';
-                return `<div class="iface-line">
-                    <span class="iface-name ${color}" style="font-weight:bold;min-width:60px;display:inline-block;">${this.escapeHtml(i.name)}: ${this.escapeHtml(i.status)}</span>
-                    <span class="iface-addr text-muted" style="margin-left:8px;">/ ${this.escapeHtml(addr)}</span>
-                </div>`;
-            }).join('');
+            tbodyIf.innerHTML = ifaces.map(i => `
+                <tr>
+                    <td class="text-mono bold">${this.escapeHtml(i.name)}</td>
+                    <td><span class="status-badge ${i.status === 'UP' ? 'running' : 'stopped'}">${this.escapeHtml(i.status)}</span></td>
+                    <td class="text-mono text-xs">${this.escapeHtml((i.addrs || []).join(', '))}</td>
+                </tr>
+            `).join('');
         }
 
-        // 3. Firewall Rules
-        const diagIptables = document.getElementById('diagIptables');
-        const ipt = d.iptables || 'Unknown';
-        const iptColor = ipt.includes('Inactive') ? 'text-muted' : 'text-success';
-        diagIptables.innerHTML = `<span class="${iptColor}">${this.escapeHtml(ipt)}</span>`;
+        // 3. Firewall
+        const tbodyFw = document.getElementById('diagFirewallBody');
+        const ipt = d.iptables || {};
+
+        // Handle legacy string response just in case
+        if (typeof ipt === 'string') {
+            tbodyFw.innerHTML = `<tr><td colspan="3">${this.escapeHtml(ipt)}</td></tr>`;
+        } else {
+            // Expecting map { masquerade: N, dnat: N, total: N }
+            tbodyFw.innerHTML = `
+                <tr>
+                    <td>MASQUERADE</td>
+                    <td class="text-mono bold">${ipt.masquerade || 0}</td>
+                    <td>${(ipt.masquerade > 0) ? '<span class="text-success">Active</span>' : '<span class="text-muted">Inactive</span>'}</td>
+                </tr>
+                <tr>
+                    <td>DNAT</td>
+                    <td class="text-mono bold">${ipt.dnat || 0}</td>
+                    <td>${(ipt.dnat > 0) ? '<span class="text-success">Active</span>' : '<span class="text-muted">Inactive</span>'}</td>
+                </tr>
+                <tr>
+                    <td class="bold">Total Rules</td>
+                    <td class="text-mono bold">${ipt.total || 0}</td>
+                    <td>${(ipt.total > 0) ? '<span class="text-success">System OK</span>' : '<span class="text-warning">Check Config</span>'}</td>
+                </tr>
+             `;
+        }
     },
 
     renderServers(servers) {
