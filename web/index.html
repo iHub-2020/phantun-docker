@@ -148,104 +148,127 @@
             </div>
 
             <!-- Global Settings -->
-            <div class="config-section">
-                <div class="section-header">
-                    <div class="section-title">Global Settings</div>
-                </div>
-                <div class="section-body no-padding">
-                    <div class="settings-form">
-                        <div class="setting-row">
-                            <label class="setting-label">Enable Service</label>
-                            <div class="setting-control">
-                                <input type="checkbox" class="checkbox" id="enableService">
-                                <span class="setting-hint">Master switch.</span>
-                            </div>
+            <div class="card mb-4"
+                style="border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px;">
+                <div class="card-header" data-i18n="Global Settings"
+                    style="padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); font-weight: bold;">
+                    Global Settings</div>
+                <div class="card-body" style="padding: 15px;">
+                    <div class="form-section-desc" data-i18n="Phantun daemon global settings.">Phantun daemon global
+                        settings.</div>
+
+                    <!-- Enable Service -->
+                    <div class="form-row">
+                        <div class="form-label" data-i18n="Enable Service">Enable Service</div>
+                        <div class="form-field">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableService">
+                            </label>
+                            <div class="form-help" data-i18n="Master switch. If disabled, no instances will run.">Master
+                                switch. If disabled, no instances will run.</div>
                         </div>
-                        <div class="setting-row">
-                            <label class="setting-label">Log Level</label>
-                            <div class="setting-control">
-                                <select class="form-select" id="logLevel">
-                                    <option value="info">Info</option>
-                                    <option value="debug">Debug</option>
-                                    <option value="error">Error</option>
-                                </select>
-                            </div>
+                    </div>
+
+                    <!-- Log Level -->
+                    <div class="form-row">
+                        <div class="form-label" data-i18n="Log Level">Log Level</div>
+                        <div class="form-field">
+                            <select id="logLevel" class="form-select" style="max-width: 200px;">
+                                <option value="info">Info (Default)</option>
+                                <option value="debug">Debug</option>
+                                <option value="error">Error</option>
+                                <option value="warn">Warning</option>
+                            </select>
+                            <div class="form-help" data-i18n="Log verbosity (uses RUST_LOG env var).">Log verbosity
+                                (uses RUST_LOG env var).</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Server Instances -->
-            <div class="config-section">
-                <div class="section-header">
-                    <div class="section-title">Server Instances</div>
+            <div class="card mb-4"
+                style="border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px;">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                    style="padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); font-weight: bold;">
+                    <span data-i18n="Server Instances">Server Instances</span>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-outline" onclick="app.importConfig('server')">Import</button>
+                        <button class="btn btn-sm btn-outline" onclick="app.exportConfig('server')">Export</button>
+                    </div>
                 </div>
-                <div class="section-body no-padding">
-                    <div class="table-wrapper">
+                <div class="card-body" style="padding: 15px;">
+                    <div class="form-section-desc">
+                        <span data-i18n="Server Mode Description">Server Mode: OpenWrt listens for TCP connections from
+                            Phantun Client and forwards to local UDP service.</span><br>
+                        <span
+                            data-i18n="Flow: Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service">Flow:
+                            Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service</span>
+                    </div>
+                    <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Enabled</th>
-                                    <th>TCP Port</th>
-                                    <th>Forward IP</th>
-                                    <th>Forward Port</th>
-                                    <th>Actions</th>
+                                    <th data-i18n="Name">Name</th>
+                                    <th data-i18n="Enabled" style="width: 60px;">Enable</th>
+                                    <th data-i18n="TCP Port">TCP Port</th>
+                                    <th data-i18n="Forward IP">Forward IP</th>
+                                    <th data-i18n="Forward Port">Forward Port</th>
+                                    <th data-i18n="Actions" style="width: 140px;">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="serverTableBody">
-                                <tr class="empty-row">
-                                    <td colspan="6">No server instances.</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="serverTableBody"></tbody>
                         </table>
                     </div>
-                    <div class="table-footer">
-                        <div class="btn-group-left">
-                            <button class="btn btn-outline btn-sm" onclick="app.importConfig('server')">Import</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.exportConfig('server')">Export</button>
-                        </div>
-                        <button class="btn-add" onclick="app.openAddModal('server')">Add Server</button>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="app.openAddModal('server')" data-i18n="Add Server">Add
+                            Server</button>
                     </div>
                 </div>
             </div>
 
             <!-- Client Instances -->
-            <div class="config-section">
-                <div class="section-header">
-                    <div class="section-title">Client Instances</div>
+            <div class="card mb-4"
+                style="border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px;">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                    style="padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); font-weight: bold;">
+                    <span data-i18n="Client Instances">Client Instances</span>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-outline" onclick="app.importConfig('client')">Import</button>
+                        <button class="btn btn-sm btn-outline" onclick="app.exportConfig('client')">Export</button>
+                    </div>
                 </div>
-                <div class="section-body no-padding">
-                    <div class="table-wrapper">
+                <div class="card-body" style="padding: 15px;">
+                    <div class="form-section-desc">
+                        <span data-i18n="Client Mode Description">Client Mode: OpenWrt listens on local UDP and tunnel
+                            to remote Phantun Server.</span><br>
+                        <span
+                            data-i18n="Flow: Local UDP App -> Phantun Client -> [TCP Tunnel] -> Remote Phantun Server">Flow:
+                            Local UDP App -> Phantun Client -> [TCP Tunnel] -> Remote Phantun Server</span>
+                    </div>
+                    <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Enabled</th>
-                                    <th>Server Addr</th>
-                                    <th>Server Port</th>
-                                    <th>Local Port</th>
-                                    <th>Actions</th>
+                                    <th data-i18n="Name">Name</th>
+                                    <th data-i18n="Enabled" style="width: 60px;">Enable</th>
+                                    <th data-i18n="Server Addr">Server Addr</th>
+                                    <th data-i18n="Server Port">Server Port</th>
+                                    <th data-i18n="Local Port">Local Port</th>
+                                    <th data-i18n="Actions" style="width: 140px;">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="clientTableBody">
-                                <tr class="empty-row">
-                                    <td colspan="6">No client instances.</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="clientTableBody"></tbody>
                         </table>
                     </div>
-                    <div class="table-footer">
-                        <div class="btn-group-left">
-                            <button class="btn btn-outline btn-sm" onclick="app.importConfig('client')">Import</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.exportConfig('client')">Export</button>
-                        </div>
-                        <button class="btn-add" onclick="app.openAddModal('client')">Add Client</button>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="app.openAddModal('client')" data-i18n="Add Client">Add
+                            Client</button>
                     </div>
                 </div>
             </div>
 
-            <div class="action-bar">
+            <div class="action-bar" style="margin-top: 20px;">
                 <button class="btn btn-primary" onclick="app.saveAndApply()">Save & Apply</button>
                 <button class="btn btn-secondary" onclick="app.saveOnly()">Save Only</button>
                 <button class="btn btn-outline" onclick="app.resetConfigWithConfirm()">Reset</button>
@@ -351,105 +374,174 @@
 
     </main>
 
-    <!-- Modal with Advanced Settings -->
+    <!-- Edit Modal (Tabs) -->
     <div class="modal-overlay" id="editModal">
-        <div class="modal">
+        <div class="modal" style="max-width: 800px;">
             <div class="modal-header">
                 <span class="modal-title" id="editModalTitle">Edit Instance</span>
                 <button class="modal-close" onclick="app.closeModal('editModal')">✕</button>
             </div>
-            <div class="modal-body">
-                <!-- Basic Fields -->
-                <div class="form-row">
-                    <label class="form-label">Enable</label>
-                    <div class="form-control-wrapper"><input type="checkbox" class="checkbox" id="editEnable"></div>
-                </div>
-                <div class="form-row">
-                    <label class="form-label">Alias</label>
-                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editAlias"
-                            placeholder="Name"></div>
-                </div>
 
-                <!-- Server Fields -->
-                <div class="form-row server-field">
-                    <label class="form-label">TCP Listen Port</label>
-                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editServerPort"
-                            placeholder="4567"></div>
-                </div>
-                <div class="form-row server-field">
-                    <label class="form-label">Forward IP</label>
-                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editForwardIp"
-                            placeholder="127.0.0.1"></div>
-                </div>
-                <div class="form-row server-field">
-                    <label class="form-label">Forward Port</label>
-                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editForwardPort"
-                            placeholder="51820"></div>
-                </div>
-
-                <!-- Client Fields -->
-                <div class="form-row client-field" style="display:none;">
-                    <label class="form-label">Server Address</label>
-                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editRemoteAddr"
-                            placeholder="1.2.3.4"></div>
-                </div>
-                <div class="form-row client-field" style="display:none;">
-                    <label class="form-label">Server Port</label>
-                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editRemotePort"
-                            placeholder="4567"></div>
-                </div>
-                <div class="form-row client-field" style="display:none;">
-                    <label class="form-label">Local UDP Port</label>
-                    <div class="form-control-wrapper"><input type="number" class="form-control" id="editLocalPort"
-                            placeholder="51820"></div>
-                </div>
-
-                <!-- Common TUN Fields -->
-                <div class="form-row">
-                    <label class="form-label">TUN Local IP</label>
-                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editTunLocal"
-                            placeholder="192.168.200.2"></div>
-                </div>
-                <div class="form-row">
-                    <label class="form-label">TUN Peer IP</label>
-                    <div class="form-control-wrapper"><input type="text" class="form-control" id="editTunPeer"
-                            placeholder="192.168.200.1"></div>
-                </div>
-
-                <!-- NEW: Advanced Settings Accordion -->
-                <div class="advanced-settings">
-                    <div class="advanced-trigger"
-                        onclick="document.getElementById('advancedContent').classList.toggle('hidden')">
-                        <span>▶ Advanced Settings (IPv6, Handshake)</span>
-                    </div>
-                    <div class="advanced-content hidden" id="advancedContent">
-                        <div class="form-row">
-                            <label class="form-label">TUN Name (Optional)</label>
-                            <div class="form-control-wrapper"><input type="text" class="form-control" id="editTunName"
-                                    placeholder="tun0"></div>
-                        </div>
-                        <div class="form-row">
-                            <label class="form-label">TUN Local IPv6</label>
-                            <div class="form-control-wrapper"><input type="text" class="form-control"
-                                    id="editTunLocalIPv6" placeholder="fcc8::2"></div>
-                        </div>
-                        <div class="form-row">
-                            <label class="form-label">TUN Peer IPv6</label>
-                            <div class="form-control-wrapper"><input type="text" class="form-control"
-                                    id="editTunPeerIPv6" placeholder="fcc8::1"></div>
-                        </div>
-                        <div class="form-row">
-                            <label class="form-label">Handshake File</label>
-                            <div class="form-control-wrapper"><input type="text" class="form-control"
-                                    id="editHandshakeFile" placeholder="/etc/phantun/handshake.bin"></div>
-                        </div>
-                    </div>
-                </div>
-
+            <!-- Tabs -->
+            <div class="modal-tabs" style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px;">
+                <button class="tab-btn active" onclick="app.switchModalTab('basic')"
+                    style="padding: 10px 20px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent;">Basic
+                    Settings</button>
+                <button class="tab-btn" onclick="app.switchModalTab('advanced')"
+                    style="padding: 10px 20px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent;">Advanced
+                    Settings</button>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="app.closeModal('editModal')">Close</button>
-                <button class="btn btn-danger" onclick="app.deleteInstance()" id="deleteBtn">Delete</button>
+
+            <div class="modal-body">
+                <!-- Basic Tab -->
+                <div id="modalTabBasic" class="tab-content active" style="display: block;">
+                    <!-- Enabled -->
+                    <div class="form-row">
+                        <div class="form-label">Enabled</div>
+                        <div class="form-field">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="editEnable">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Alias -->
+                    <div class="form-row">
+                        <div class="form-label">Alias</div>
+                        <div class="form-field">
+                            <input type="text" id="editAlias" class="form-control" placeholder="Friendly Name">
+                        </div>
+                    </div>
+
+                    <!-- Server Specific -->
+                    <div class="server-field">
+                        <div class="form-row">
+                            <div class="form-label">TCP Listening Port</div>
+                            <div class="form-field">
+                                <input type="number" id="editServerPort" class="form-control" placeholder="4567">
+                                <div class="form-help">Port OpenWrt listens on (TCP)</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-label">Forward To IP</div>
+                            <div class="form-field">
+                                <input type="text" id="editForwardIp" class="form-control" placeholder="127.0.0.1">
+                                <div class="form-help">IP address of the local service to forward to</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-label">Forward To Port</div>
+                            <div class="form-field">
+                                <input type="number" id="editForwardPort" class="form-control"
+                                    placeholder="UDP Service Port">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Specific -->
+                    <div class="client-field">
+                        <div class="form-row">
+                            <div class="form-label">Server Address</div>
+                            <div class="form-field">
+                                <input type="text" id="editRemoteAddr" class="form-control" placeholder="IP or Domain">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-label">Server Port</div>
+                            <div class="form-field">
+                                <input type="number" id="editRemotePort" class="form-control" placeholder="TCP Port">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-label">Local Listening Port</div>
+                            <div class="form-field">
+                                <input type="number" id="editLocalPort" class="form-control"
+                                    placeholder="UDP Listen Port">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-label">Local UDP IP</div>
+                            <div class="form-field">
+                                <input type="text" class="form-control" value="127.0.0.1" disabled
+                                    style="background: var(--bg-input); color: var(--text-secondary); cursor: not-allowed;">
+                                <div class="form-help">Bind address for receiving UDP packets. WireGuard/OpenVPN uses
+                                    127.0.0.1.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Tab -->
+                <div id="modalTabAdvanced" class="tab-content" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-label">IPv4 Only</div>
+                        <div class="form-field">
+                            <label class="checkbox-label">
+                                <input type="checkbox" disabled checked>
+                            </label>
+                            <div class="form-help">Only use IPv4. Disable IPv6 on TUN interface.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">TUN Interface Name</div>
+                        <div class="form-field">
+                            <input type="text" id="editTunName" class="form-control" placeholder="tun0">
+                            <div class="form-help">Custom TUN interface name. Leave empty for auto (tun0, tun1...).
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">TUN Local IPv4</div>
+                        <div class="form-field">
+                            <input type="text" id="editTunLocal" class="form-control" placeholder="192.168.200.1">
+                            <div class="form-help">TUN interface IPv4 on OS side. Default 192.168.200.1.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">TUN Peer IPv4</div>
+                        <div class="form-field">
+                            <input type="text" id="editTunPeer" class="form-control" placeholder="192.168.200.2">
+                            <div class="form-help">Phantun side TUN IPv4. DNAT rules will redirect to this IP. Default
+                                192.168.200.2.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">TUN Local IPv6</div>
+                        <div class="form-field">
+                            <input type="text" id="editTunLocalIPv6" class="form-control" placeholder="fcc8::1">
+                            <div class="form-help">TUN interface IPv6 on OS side. Default fcc8::1.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">TUN Peer IPv6</div>
+                        <div class="form-field">
+                            <input type="text" id="editTunPeerIPv6" class="form-control" placeholder="fcc8::2">
+                            <div class="form-help">Phantun side TUN IPv6. Default fcc8::2.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Handshake Packet</div>
+                        <div class="form-field">
+                            <input type="text" id="editHandshakeFile" class="form-control" placeholder="/path/to/file">
+                            <div class="form-help">Path to file containing custom handshake packet sent after TCP
+                                connection. Advanced.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer"
+                style="padding-top: 15px; border-top: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <button class="btn btn-danger" id="deleteBtn" onclick="app.deleteInstance()">Delete</button>
+                <div style="flex:1"></div>
+                <button class="btn btn-outline" onclick="app.closeModal('editModal')"
+                    style="margin-right: 10px;">Close</button>
                 <button class="btn btn-primary" onclick="app.saveInstance()">Save</button>
             </div>
         </div>
