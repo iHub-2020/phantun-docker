@@ -260,16 +260,19 @@
                     <div class="section-title">System Diagnostics</div>
                 </div>
                 <div class="section-body">
-                    <div class="diag-grid">
+                    <div class="diag-table">
                         <div class="diag-row">
-                            <span class="diag-label">Core Binary:</span>
-                            <span class="diag-value" id="diagBinary"><span class="status-icon">⏳</span>
-                                Loading...</span>
+                            <div class="diag-label">Core Program</div>
+                            <div class="diag-value" id="diagBinary"><span class="status-icon">⏳</span> Loading...</div>
                         </div>
                         <div class="diag-row">
-                            <span class="diag-label">Iptables Rules:</span>
-                            <span class="diag-value" id="diagIptables"><span class="status-icon">⏳</span>
-                                Loading...</span>
+                            <div class="diag-label">TUN Interface</div>
+                            <div class="diag-value" id="diagInterfaces"><span class="text-muted">Loading...</span></div>
+                        </div>
+                        <div class="diag-row">
+                            <div class="diag-label">Firewall Rules</div>
+                            <div class="diag-value" id="diagIptables"><span class="status-icon">⏳</span> Loading...
+                            </div>
                         </div>
                     </div>
                 </div>

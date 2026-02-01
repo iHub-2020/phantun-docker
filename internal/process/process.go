@@ -8,6 +8,10 @@ import (
 	"syscall"
 	"time"
 
+	"crypto/md5"
+	"encoding/hex"
+	"io"
+	"os"
 	"phantun-docker/internal/config"
 	"phantun-docker/internal/iptables"
 )
@@ -294,9 +298,44 @@ func (m *Manager) GetStatus() []ProcessDTO {
 	return list
 }
 
-// CheckBinaries verifies if Phantun executables are present
+// CheckBinaries verifies if Phantun executables are present (Deprecated, use GetBinariesInfo)
 func (m *Manager) CheckBinaries() bool {
 	_, err1 := exec.LookPath("phantun_client")
 	_, err2 := exec.LookPath("phantun_server")
 	return err1 == nil && err2 == nil
+}
+
+// GetBinariesInfo returns detailed binary info
+func (m *Manager) GetBinariesInfo() map[string]interface{} {
+	info := map[string]interface{}{
+		"client": "missing",
+		"server": "missing",
+		"ok":     false,
+	}
+
+	if path, err := exec.LookPath("phantun_client"); err == nil {
+		info["client"] = getFileHash(path)
+	}
+	if path, err := exec.LookPath("phantun_server"); err == nil {
+		info["server"] = getFileHash(path)
+	}
+
+	if info["client"] != "missing" && info["server"] != "missing" {
+		info["ok"] = true
+	}
+	return info
+}
+
+func getFileHash(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		return "readable-error"
+	}
+	defer f.Close()
+
+	h := md5.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "hash-error"
+	}
+	return hex.EncodeToString(h.Sum(nil))[:8] // Short hash
 }

@@ -1709,3 +1709,51 @@ body.login-page {
     margin: 0;
     color: #E2E8F0;
 }
+
+/* LuCI Style Diagnostics */
+.diag-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card);
+    margin-top: 10px;
+}
+
+.diag-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 15px;
+    align-items: flex-start;
+}
+
+.diag-row:last-child {
+    border-bottom: none;
+}
+
+.diag-label {
+    width: 25%;
+    min-width: 150px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding-top: 2px;
+}
+
+.diag-value {
+    flex: 1;
+    color: var(--text-primary);
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.iface-line {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+.iface-line:last-child {
+    margin-bottom: 0;
+}

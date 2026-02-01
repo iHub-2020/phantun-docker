@@ -7,6 +7,7 @@ import (
 	"phantun-docker/internal/config"
 	"phantun-docker/internal/iptables"
 	"phantun-docker/internal/process"
+	"phantun-docker/internal/system"
 	"strings"
 	"time"
 )
@@ -33,11 +34,20 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 func (h *Handler) handleStatus(w http.ResponseWriter, r *http.Request) {
+	binInfo := h.Manager.GetBinariesInfo()
+	iptStats, _ := iptables.GetStats()
+	tunIfaces, _ := system.GetTunInterfaces()
+
 	status := map[string]interface{}{
 		"enabled":   h.Config.General.Enabled,
 		"system":    "running",
-		"binary_ok": h.Manager.CheckBinaries(),
+		"binary_ok": binInfo["ok"], // Backward compatibility
 		"processes": h.Manager.GetStatus(),
+		"diagnostics": map[string]interface{}{
+			"binaries":   binInfo,
+			"iptables":   iptStats,
+			"interfaces": tunIfaces,
+		},
 	}
 	json.NewEncoder(w).Encode(status)
 }

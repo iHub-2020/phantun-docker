@@ -201,29 +201,46 @@ const app = {
         `).join('');
     },
 
-    async updateDiagnostics(status) {
+    updateDiagnostics(status) {
+        if (!status?.diagnostics) {
+            return;
+        }
+        const d = status.diagnostics;
+
+        // 1. Binaries with MD5
         const diagBinary = document.getElementById('diagBinary');
+        const binOk = d.binaries?.ok;
+        const cHash = d.binaries?.client || '?';
+        const sHash = d.binaries?.server || '?';
+        const binText = binOk
+            ? `Verified (Client: ${cHash}, Server: ${sHash})`
+            : '<span class="text-danger">Binaries Verification Failed</span>';
+        const binIcon = binOk ? '✓' : '✗';
+        const binClass = binOk ? 'text-success' : 'text-danger';
+
+        diagBinary.innerHTML = `<span class="${binClass}"><span class="status-icon">${binIcon}</span> ${binText}</span>`;
+
+        // 2. Network Interfaces
+        const diagInterfaces = document.getElementById('diagInterfaces');
+        const ifaces = d.interfaces || [];
+        if (ifaces.length === 0) {
+            diagInterfaces.innerHTML = '<span class="text-muted">No TUN interfaces found</span>';
+        } else {
+            diagInterfaces.innerHTML = ifaces.map(i => {
+                const color = i.status === 'UP' ? 'text-success' : 'text-danger';
+                const addr = i.addrs && i.addrs.length > 0 ? i.addrs.join(', ') : 'No IP';
+                return `<div class="iface-line">
+                    <span class="iface-name ${color}" style="font-weight:bold;min-width:60px;display:inline-block;">${this.escapeHtml(i.name)}: ${this.escapeHtml(i.status)}</span>
+                    <span class="iface-addr text-muted" style="margin-left:8px;">/ ${this.escapeHtml(addr)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // 3. Firewall Rules
         const diagIptables = document.getElementById('diagIptables');
-
-        // Check Binary Status (from status payload or default)
-        if (status && typeof status.binary_ok !== 'undefined') {
-            diagBinary.innerHTML = status.binary_ok ?
-                '<span class="status-icon">✓</span><span>Phantun binaries found</span>' :
-                '<span class="status-icon" style="color:var(--accent-error)">✗</span><span>Phantun binaries missing</span>';
-        }
-
-        // Check Iptables (fetch separately as it's not in regular status)
-        // We throttle this or just run it. For now, run it.
-        try {
-            const iptablesResp = await this.fetchWithError(CONFIG.API.IPTABLES);
-            const iptables = await iptablesResp.json();
-            const count = (iptables.rules || []).length;
-            diagIptables.innerHTML = count > 0 ?
-                `<span class="status-icon">✓</span><span>${count} rules active</span>` :
-                '<span class="status-icon">⚠</span><span>No rules configured</span>';
-        } catch (err) {
-            console.warn('Iptables check failed:', err);
-        }
+        const ipt = d.iptables || 'Unknown';
+        const iptColor = ipt.includes('Inactive') ? 'text-muted' : 'text-success';
+        diagIptables.innerHTML = `<span class="${iptColor}">${this.escapeHtml(ipt)}</span>`;
     },
 
     renderServers(servers) {

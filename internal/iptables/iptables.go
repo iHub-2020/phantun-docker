@@ -5,22 +5,23 @@ import (
 	"log"
 	"os/exec"
 	"phantun-docker/internal/config"
+	"strings"
 )
 
 // SetupClient applies iptables rules for Client mode
 func SetupClient(c config.ClientConfig) error {
 	// iptables -t nat -A POSTROUTING -s {tun_peer}/32 -m comment --comment "phantun" -j MASQUERADE
-	return runIptables("-t", "nat", "-A", "POSTROUTING", 
-		"-s", c.TunPeer + "/32", 
-		"-m", "comment", "--comment", "phantun", 
+	return runIptables("-t", "nat", "-A", "POSTROUTING",
+		"-s", c.TunPeer+"/32",
+		"-m", "comment", "--comment", "phantun",
 		"-j", "MASQUERADE")
 }
 
 // CleanupClient removes iptables rules for Client mode
 func CleanupClient(c config.ClientConfig) error {
-	return runIptables("-t", "nat", "-D", "POSTROUTING", 
-		"-s", c.TunPeer + "/32", 
-		"-m", "comment", "--comment", "phantun", 
+	return runIptables("-t", "nat", "-D", "POSTROUTING",
+		"-s", c.TunPeer+"/32",
+		"-m", "comment", "--comment", "phantun",
 		"-j", "MASQUERADE")
 }
 
@@ -30,8 +31,8 @@ func SetupServer(s config.ServerConfig) error {
 	// Note: Phantun Server listens on TCP, but decapsulates to UDP to target?
 	// The init script uses TCP for DNAT.
 	// iptables -t nat -A PREROUTING -p tcp --dport {local_port} ... -j DNAT ...
-	err := runIptables("-t", "nat", "-A", "PREROUTING", 
-		"-p", "tcp", "--dport", s.LocalPort, 
+	err := runIptables("-t", "nat", "-A", "PREROUTING",
+		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
 		"-j", "DNAT", "--to-destination", fmt.Sprintf("%s:%s", s.TunPeer, s.RemotePort))
 	if err != nil {
@@ -49,8 +50,8 @@ func SetupServer(s config.ServerConfig) error {
 // CleanupServer removes iptables rules for Server mode
 func CleanupServer(s config.ServerConfig) error {
 	// Ignore errors during cleanup
-	runIptables("-t", "nat", "-D", "PREROUTING", 
-		"-p", "tcp", "--dport", s.LocalPort, 
+	runIptables("-t", "nat", "-D", "PREROUTING",
+		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
 		"-j", "DNAT", "--to-destination", fmt.Sprintf("%s:%s", s.TunPeer, s.RemotePort))
 
@@ -79,4 +80,19 @@ func GetRules() (string, error) {
 		return "", err
 	}
 	return string(out), nil
+}
+
+// GetStats returns a summary string of active rules
+func GetStats() (string, error) {
+	rules, err := GetRules()
+	if err != nil {
+		return "Error checking iptables", err
+	}
+	masq := strings.Count(rules, "MASQUERADE")
+	dnat := strings.Count(rules, "DNAT")
+	total := masq + dnat
+	if total == 0 {
+		return "Inactive (No rules found)", nil
+	}
+	return fmt.Sprintf("Active (%d rules: MASQUERADE, DNAT)", total), nil
 }
