@@ -1,18 +1,48 @@
+/* ========================================
+   PHANTUN MANAGER - INDUSTRIAL DARK THEME
+   ========================================
+   
+   TABLE OF CONTENTS:
+   1. Design System (Variables)
+   2. Base Styles
+   3. Layout Components (Header, Main, Footer)
+   4. UI Components (Cards, Buttons, Tables, Modals)
+   5. Form Elements
+   6. Accessibility Features
+   7. Responsive Design
+   8. Print Styles
+   
+   ======================================== */
+
+/* ===== 1. DESIGN SYSTEM ===== */
 /* Industrial Dark Theme for Phantun Manager */
 :root {
+    /* ===== COLORS ===== */
+    /* Backgrounds */
     --bg-body: #020617;
     --bg-card: #0F172A;
     --bg-card-hover: #1E293B;
     --bg-input: #1E293B;
-    --border: #334155;
+    --bg-header: #0F172A;
+    --bg-modal-overlay: rgba(0, 0, 0, 0.75);
+    --bg-elevated: #1E293B;
 
+    /* Borders */
+    --border: #334155;
+    --border-light: #475569;
+    --border-focus: var(--accent-success);
+
+    /* Text */
     --text-primary: #F8FAFC;
     /* Slate 50 */
     --text-secondary: #94A3B8;
     /* Slate 400 */
     --text-muted: #64748B;
     /* Slate 500 */
+    --text-disabled: #475569;
+    /* Slate 600 */
 
+    /* Accents */
     --accent-primary: #3B82F6;
     /* Blue 500 - Primary Action */
     --accent-success: #22C55E;
@@ -21,13 +51,78 @@
     /* Red 500 - Error/Stop */
     --accent-warning: #F59E0B;
     /* Amber 500 */
+    --accent-info: #06B6D4;
+    /* Cyan 500 */
 
-    --font-mono: 'Fira Code', monospace;
-    --font-sans: 'Inter', system-ui, sans-serif;
+    /* ===== SPACING (rem-based) ===== */
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
 
+    /* ===== SHADOWS ===== */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
     --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.1);
+    --shadow-glow-green: 0 0 12px rgba(34, 197, 94, 0.2);
+
+    /* ===== TYPOGRAPHY ===== */
+    --font-mono: 'Fira Code', monospace;
+    --font-sans: 'Fira Sans', system-ui, -apple-system, sans-serif;
+
+    --font-size-xs: 0.75rem;
+    /* 12px */
+    --font-size-sm: 0.875rem;
+    /* 14px */
+    --font-size-base: 1rem;
+    /* 16px */
+    --font-size-lg: 1.125rem;
+    /* 18px */
+    --font-size-xl: 1.25rem;
+    /* 20px */
+    --font-size-2xl: 1.5rem;
+    /* 24px */
+
+    /* ===== BORDERS ===== */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-full: 9999px;
+
+    /* ===== TRANSITIONS ===== */
+    --transition-fast: 150ms ease;
+    --transition-base: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    /* ===== Z-INDEX ===== */
+    --z-base: 0;
+    --z-dropdown: 10;
+    --z-sticky: 20;
+    --z-overlay: 40;
+    --z-modal: 50;
+    --z-toast: 100;
 }
 
+/* ===== 2. BASE STYLES ===== */
 * {
     box-sizing: border-box;
 }
@@ -41,6 +136,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* ===== 3. LAYOUT COMPONENTS ===== */
 /* Login Background */
 .login-background {
     position: fixed;
@@ -962,6 +1058,7 @@ input:checked+.slider:before {
     font-family: var(--font-sans);
     cursor: pointer;
 }
+
 /* === ACCESSIBILITY & INTERACTION IMPROVEMENTS === */
 
 /* Focus States */
@@ -1014,7 +1111,9 @@ button[aria-busy="true"]::after {
 }
 
 @keyframes spin {
-    to { transform: translateY(-50%) rotate(360deg); }
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
 }
 
 /* Skip to Content Link (Accessibility) */
@@ -1036,6 +1135,7 @@ button[aria-busy="true"]::after {
 
 /* Reduce Motion Support */
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -1290,6 +1390,7 @@ button[aria-busy="true"]::after {
 
 /* === PRINT STYLES === */
 @media print {
+
     .top-header,
     .header-actions,
     .page-tabs,
@@ -1367,6 +1468,7 @@ button[aria-busy="true"]::after {
 }
 
 @media (max-width: 767px) {
+
     .error-toast,
     .success-toast {
         right: 10px;

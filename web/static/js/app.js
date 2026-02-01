@@ -1,3 +1,32 @@
+// ===== CONFIGURATION =====
+const CONFIG = {
+    // Polling & Refresh
+    STATUS_POLL_INTERVAL: 5000,        // 5 seconds
+
+    // Logs
+    LOG_MAX_LINES: 1000,               // Maximum log lines to keep
+    AUTO_SCROLL_THRESHOLD: 50,         // Pixels from bottom to trigger auto-scroll
+
+    // Notifications
+    ERROR_TOAST_DURATION: 5000,        // 5 seconds
+    SUCCESS_TOAST_DURATION: 3000,      // 3 seconds
+    TOAST_ANIMATION_DELAY: 10,         // ms before show animation
+    TOAST_HIDE_DELAY: 300,             // ms fade-out duration
+
+    // Service Management
+    SERVICE_RESTART_CHECK_DELAY: 2000, // 2 seconds after restart
+
+    // API Endpoints
+    API: {
+        STATUS: '/api/status',
+        CONFIG: '/api/config',
+        LOGS: '/api/logs',
+        IPTABLES: '/api/iptables',
+        ACTION_RESTART: '/api/action/restart'
+    }
+};
+
+// ===== APPLICATION =====
 // Phantun Manager Application
 const app = {
     currentMode: null, // 'server' or 'client'
@@ -11,7 +40,7 @@ const app = {
         this.loadStatus();
         this.checkDiagnostics();
         // Auto-refresh status every 5s
-        setInterval(() => this.loadStatus(), 5000);
+        setInterval(() => this.loadStatus(), CONFIG.STATUS_POLL_INTERVAL);
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => this.cleanup());
     },
@@ -30,11 +59,11 @@ const app = {
             ${details ? `<br><small>${this.escapeHtml(details)}</small>` : ''}
         `;
         document.body.appendChild(errorBox);
-        setTimeout(() => errorBox.classList.add('show'), 10);
+        setTimeout(() => errorBox.classList.add('show'), CONFIG.TOAST_ANIMATION_DELAY);
         setTimeout(() => {
             errorBox.classList.remove('show');
-            setTimeout(() => errorBox.remove(), 300);
-        }, 5000);
+            setTimeout(() => errorBox.remove(), CONFIG.TOAST_HIDE_DELAY);
+        }, CONFIG.ERROR_TOAST_DURATION);
     },
 
     showSuccess(message) {
@@ -42,11 +71,11 @@ const app = {
         successBox.className = 'success-toast';
         successBox.innerHTML = `<strong>Success:</strong> ${this.escapeHtml(message)}`;
         document.body.appendChild(successBox);
-        setTimeout(() => successBox.classList.add('show'), 10);
+        setTimeout(() => successBox.classList.add('show'), CONFIG.TOAST_ANIMATION_DELAY);
         setTimeout(() => {
             successBox.classList.remove('show');
-            setTimeout(() => successBox.remove(), 300);
-        }, 3000);
+            setTimeout(() => successBox.remove(), CONFIG.TOAST_HIDE_DELAY);
+        }, CONFIG.SUCCESS_TOAST_DURATION);
     },
 
     async fetchWithError(url, options = {}) {
@@ -93,7 +122,7 @@ const app = {
 
     async loadConfig() {
         try {
-            const resp = await this.fetchWithError('/api/config');
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
             this.renderServers(config.servers || []);
             this.renderClients(config.clients || []);
@@ -107,7 +136,7 @@ const app = {
 
     async loadStatus() {
         try {
-            const resp = await this.fetchWithError('/api/status');
+            const resp = await this.fetchWithError(CONFIG.API.STATUS);
             const status = await resp.json();
             this.updateServiceStatus(status);
             this.updateTunnelStatus(status.processes || []);
@@ -157,7 +186,7 @@ const app = {
         const diagIptables = document.getElementById('diagIptables');
 
         try {
-            const resp = await this.fetchWithError('/api/status');
+            const resp = await this.fetchWithError(CONFIG.API.STATUS);
             const data = await resp.json();
 
             // Core Binary Status
@@ -166,7 +195,7 @@ const app = {
                 '<span class="status-icon">✗</span><span>Phantun binaries missing</span>';
 
             // Iptables Status
-            const iptablesResp = await this.fetchWithError('/api/iptables');
+            const iptablesResp = await this.fetchWithError(CONFIG.API.IPTABLES);
             const iptables = await iptablesResp.json();
             const count = (iptables.rules || []).length;
             diagIptables.innerHTML = count > 0 ?
@@ -242,7 +271,7 @@ const app = {
 
     async loadModalData(mode, index) {
         try {
-            const resp = await this.fetchWithError('/api/config');
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
             const data = mode === 'server' ? config.servers[index] : config.clients[index];
 
@@ -295,7 +324,7 @@ const app = {
 
     async saveInstance() {
         try {
-            const resp = await this.fetchWithError('/api/config');
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
 
             const instance = {
@@ -329,7 +358,7 @@ const app = {
                 }
             }
 
-            await this.fetchWithError('/api/config', {
+            await this.fetchWithError(CONFIG.API.CONFIG, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
@@ -353,7 +382,7 @@ const app = {
     async deleteInstanceDirect(mode, index) {
         if (!confirm('Delete this instance?')) return;
         try {
-            const resp = await this.fetchWithError('/api/config');
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
 
             if (mode === 'server') {
@@ -362,7 +391,7 @@ const app = {
                 config.clients.splice(index, 1);
             }
 
-            await this.fetchWithError('/api/config', {
+            await this.fetchWithError(CONFIG.API.CONFIG, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
@@ -383,9 +412,9 @@ const app = {
     async saveAndApply() {
         try {
             await this.saveConfig();
-            await this.fetchWithError('/api/action/restart', { method: 'POST' });
+            await this.fetchWithError(CONFIG.API.ACTION_RESTART, { method: 'POST' });
             this.showSuccess('Configuration saved and applied! Services restarting...');
-            setTimeout(() => this.loadStatus(), 2000);
+            setTimeout(() => this.loadStatus(), CONFIG.SERVICE_RESTART_CHECK_DELAY);
         } catch (err) {
             console.error('Failed to save and apply:', err);
             this.showError('Failed to save and apply', err.message);
@@ -403,7 +432,7 @@ const app = {
     },
 
     async saveConfig() {
-        const resp = await this.fetchWithError('/api/config');
+        const resp = await this.fetchWithError(CONFIG.API.CONFIG);
         const config = await resp.json();
 
         config.general = {
@@ -411,7 +440,7 @@ const app = {
             log_level: document.getElementById('logLevel').value
         };
 
-        await this.fetchWithError('/api/config', {
+        await this.fetchWithError(CONFIG.API.CONFIG, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -421,7 +450,7 @@ const app = {
     async resetConfigWithConfirm() {
         if (!confirm('Reset to default configuration? This will delete all instances!')) return;
         try {
-            await this.fetchWithError('/api/config', {
+            await this.fetchWithError(CONFIG.API.CONFIG, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ general: {}, servers: [], clients: [] })
@@ -445,7 +474,7 @@ const app = {
                 const text = await file.text();
                 const instances = JSON.parse(text);
 
-                const resp = await this.fetchWithError('/api/config');
+                const resp = await this.fetchWithError(CONFIG.API.CONFIG);
                 const config = await resp.json();
 
                 if (mode === 'server') {
@@ -454,7 +483,7 @@ const app = {
                     config.clients = instances;
                 }
 
-                await this.fetchWithError('/api/config', {
+                await this.fetchWithError(CONFIG.API.CONFIG, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
@@ -472,7 +501,7 @@ const app = {
 
     async exportConfig(mode) {
         try {
-            const resp = await this.fetchWithError('/api/config');
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
             const data = mode === 'server' ? config.servers : config.clients;
 
@@ -500,7 +529,7 @@ const app = {
     },
 
     startLogStream() {
-        this.logStream = new EventSource('/api/logs');
+        this.logStream = new EventSource(CONFIG.API.LOGS);
         this.logStreaming = true;
         document.getElementById('logStreamBtn').textContent = 'Stop Refresh';
 
@@ -535,12 +564,20 @@ const app = {
         line.textContent = `[${log.timestamp || new Date().toISOString()}] [${log.source || 'system'}] ${log.message}`;
         container.appendChild(line);
 
+        // Limit log lines
+        const lines = container.querySelectorAll('.log-line');
+        if (lines.length > CONFIG.LOG_MAX_LINES) {
+            lines[0].remove();
+        }
+
         // Update timestamp
         const now = new Date();
         document.getElementById('logTimestamp').textContent = now.toLocaleTimeString();
 
-        // Auto-scroll
-        if (container.parentElement.scrollTop + container.parentElement.clientHeight >= container.parentElement.scrollHeight - 50) {
+        // Auto-scroll if near bottom
+        const parent = container.parentElement;
+        const isNearBottom = (parent.scrollTop + parent.clientHeight) >= (parent.scrollHeight - CONFIG.AUTO_SCROLL_THRESHOLD);
+        if (isNearBottom) {
             this.scrollLogsToBottom();
         }
     },
