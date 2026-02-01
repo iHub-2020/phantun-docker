@@ -39,6 +39,7 @@ const app = {
         this.loadConfig();
         this.loadStatus();
         this.updateDiagnostics({}); // Init diagnostics empty
+        this.startLogStream();      // Auto-start logs
 
         // Auto-refresh status every 5s
         setInterval(() => this.loadStatus(), CONFIG.STATUS_POLL_INTERVAL);

@@ -7,6 +7,7 @@ import (
 	"phantun-docker/internal/config"
 	"phantun-docker/internal/iptables"
 	"phantun-docker/internal/process"
+	"strings"
 	"time"
 )
 
@@ -47,7 +48,14 @@ func (h *Handler) handleIptables(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write([]byte(rules))
+
+	response := map[string]interface{}{
+		"raw":   rules,
+		"rules": strings.Split(rules, "\n"),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
