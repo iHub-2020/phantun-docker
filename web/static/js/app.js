@@ -837,15 +837,18 @@ const app = {
             const isRunning = this.isProcessRunning(item.id, type);
             const isEnabled = item.enabled !== false;
 
+            // Fetch Process Info for Dynamic Data
+            const proc = this.lastStatus?.processes?.find(p => p.id === item.id);
+
             // Status Logic
             let statusClass = 'disabled';
             if (isEnabled) statusClass = isRunning ? 'active' : 'stopped';
 
-            // Coordinates (Increased ViewBox height)
+            // Coordinates (Wider spacing)
             const y = 40;
-            const xLocal = 100;
-            const xTun = 400; // Center
-            const xRemote = 700;
+            const xLocal = 50;     // Moved closer to edge
+            const xTun = 400;      // Center
+            const xRemote = 750;   // Moved closer to edge
 
             // Colors & Direction
             const color = type === 'client' ? '#06b6d4' : '#f59e0b';
@@ -857,10 +860,10 @@ const app = {
 
             const fiberClass = `${statusClass} ${isServer ? 'reverse' : ''}`;
 
-            // Data for labels
-            const addrLocal = item.local || '...';
-            const addrTun = item.tun_local || '...';
-            const addrRemote = item.remote || '...';
+            // Data for labels (Priority: Realtime Process Data > Config Data > Placeholder)
+            const addrLocal = proc?.local || (item.local_addr ? `${item.local_addr}:${item.local_port}` : '...');
+            const addrTun = proc?.tun_local || item.tun_local || '...';
+            const addrRemote = proc?.remote || (item.remote_addr ? `${item.remote_addr}:${item.remote_port}` : '...');
 
             return `
             <div class="topo-row">
