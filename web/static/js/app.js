@@ -35,7 +35,7 @@ const app = {
     logStreaming: false,
 
     init() {
-        // this.setupTabs(); // Removed, using inline onclick
+        this.setupTabs(); // Setup tabs with persistence
         this.loadConfig();
         this.loadStatus();
         this.updateDiagnostics({}); // Init diagnostics empty
@@ -156,16 +156,15 @@ const app = {
         try {
             const resp = await this.fetchWithError(CONFIG.API.CONFIG);
             const config = await resp.json();
-            this.lastConfig = config;
+            this.lastConfig = config; // Cache for export
             this.renderServers(config.servers || []);
             this.renderClients(config.clients || []);
             document.getElementById('enableService').checked = config.general?.enabled !== false;
             document.getElementById('logLevel').value = config.general?.log_level || 'info';
 
-            // Render Topology if available
-            if (typeof topology !== 'undefined') {
-                topology.render(config);
-            }
+            // Render Topology
+            this.renderTopology(config.clients || [], config.servers || []);
+
         } catch (err) {
             console.error('Failed to load config:', err);
             this.showError('Failed to load configuration', err.message);
@@ -796,6 +795,102 @@ const app = {
     scrollLogsToBottom() {
         const container = document.getElementById('logContent').parentElement;
         container.scrollTop = container.scrollHeight;
+    },
+
+
+
+    renderTopology(clients, servers) {
+        const container = document.getElementById('topology-map');
+        if (!container) return;
+
+        container.innerHTML = '';
+        container.className = 'topology-container'; // Verify class
+
+        const createSvgRow = (item, type, index) => {
+            const isRunning = this.isProcessRunning(item.id, type);
+            const isEnabled = item.enabled !== false;
+
+            // Status Logic
+            let statusClass = 'disabled';
+            if (isEnabled) statusClass = isRunning ? 'active' : 'stopped';
+
+            // Coordinates (ViewBox 0 0 800 80)
+            const y = 40;
+            const xLocal = 60;
+            const xPhantun = 400; // Center
+            const xRemote = 740;
+
+            // Colors
+            const color = type === 'client' ? '#06b6d4' : '#f59e0b'; // Cyan vs Amber
+
+            return `
+            <div class="topo-row">
+                <div class="topo-label">
+                    <span>${type.toUpperCase()}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
+                    <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
+                </div>
+                <svg class="topo-svg" viewBox="0 0 800 80" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <linearGradient id="grad-${type}-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:${color};stop-opacity:0.2" />
+                            <stop offset="50%" style="stop-color:${color};stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:${color};stop-opacity:0.2" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Flow Line (Background) -->
+                    <path d="M${xLocal} ${y} L${xRemote} ${y}" class="flow-line ${statusClass}" style="stroke: ${statusClass === 'active' ? `url(#grad-${type}-${index})` : ''}"></path>
+
+                    <!-- Nodes -->
+                    <!-- Local Node -->
+                    <circle cx="${xLocal}" cy="${y}" r="18" class="node-circle ${type}"></circle>
+                    <text x="${xLocal}" y="${y}" class="node-icon">💻</text>
+                    <text x="${xLocal}" y="${y + 35}" class="node-text">Local</text>
+
+                    <!-- Phantun Node (Middle) -->
+                    <circle cx="${xPhantun}" cy="${y}" r="22" class="node-circle" style="stroke: ${color}"></circle>
+                    <text x="${xPhantun}" y="${y}" class="node-icon">🛡️</text>
+                    <text x="${xPhantun}" y="${y + 38}" class="node-text">Phantun</text>
+
+                    <!-- Remote Node -->
+                    <circle cx="${xRemote}" cy="${y}" r="18" class="node-circle ${type}"></circle>
+                    <text x="${xRemote}" y="${y}" class="node-icon">☁️</text>
+                    <text x="${xRemote}" y="${y + 35}" class="node-text">Remote</text>
+
+                    ${statusClass === 'active' ? `
+                    <!-- Traffic Particles (Animated) -->
+                    <circle r="3" class="traffic-dot">
+                        <animateMotion dur="2s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" />
+                    </circle>
+                    <circle r="3" class="traffic-dot">
+                        <animateMotion dur="2s" begin="1s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" />
+                    </circle>
+                    ` : ''}
+                </svg>
+            </div>
+            `;
+        };
+
+        let html = '';
+        if (clients.length === 0 && servers.length === 0) {
+            html = '<div class="text-center text-secondary p-4">No instances configured.</div>';
+        } else {
+            clients.forEach((c, i) => html += createSvgRow(c, 'client', i));
+            servers.forEach((s, i) => html += createSvgRow(s, 'server', i));
+        }
+
+        container.innerHTML = html;
+    },
+
+    isProcessRunning(configId, type) {
+        // Find in logic processes list (status data)
+        // Since loadConfig and loadStatus might be async out of sync, 
+        // we'll rely on the visual indicator matching 'enabled' for now, 
+        // OR ideally check against this.lastStatus
+        if (!this.lastStatus || !this.lastStatus.processes) return false;
+
+        const proc = this.lastStatus.processes.find(p => p.id === configId);
+        return proc ? proc.running : false;
     },
 
     escapeHtml(text) {
