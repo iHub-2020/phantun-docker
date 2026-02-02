@@ -37,10 +37,12 @@ func SetupServer(s config.ServerConfig) error {
 	}
 
 	// 2. MASQUERADE: TCP dst {tun_peer} dport {remote_port}
-	return ensureRule("-t", "nat", "-A", "POSTROUTING",
+	if err := ensureRule("-t", "nat", "-A", "POSTROUTING",
 		"-p", "tcp", "-d", s.TunPeer, "--dport", s.RemotePort,
 		"-m", "comment", "--comment", "phantun",
-		"-j", "MASQUERADE")
+		"-j", "MASQUERADE"); err != nil {
+		return err
+	}
 	if err != nil {
 		return err
 	}
