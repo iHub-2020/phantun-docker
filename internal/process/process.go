@@ -128,11 +128,15 @@ func (m *Manager) captureOutput(cmd *exec.Cmd, id string) {
 		for {
 			n, err := stdout.Read(buf)
 			if n > 0 {
+				content := string(buf[:n])
+				// Mirror to Console for Debugging (docker logs)
+				fmt.Printf("[%s] stdout: %s", id, content)
+				
 				m.BroadcastLog(LogMessage{
 					Timestamp: time.Now(),
 					ProcessID: id,
 					Stream:    "stdout",
-					Content:   string(buf[:n]),
+					Content:   content,
 				})
 			}
 			if err != nil {
@@ -146,11 +150,15 @@ func (m *Manager) captureOutput(cmd *exec.Cmd, id string) {
 		for {
 			n, err := stderr.Read(buf)
 			if n > 0 {
+				content := string(buf[:n])
+				// Mirror to Console for Debugging (docker logs)
+				fmt.Printf("[%s] stderr: %s", id, content)
+
 				m.BroadcastLog(LogMessage{
 					Timestamp: time.Now(),
 					ProcessID: id,
 					Stream:    "stderr",
-					Content:   string(buf[:n]),
+					Content:   content,
 				})
 			}
 			if err != nil {
