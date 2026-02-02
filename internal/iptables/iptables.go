@@ -62,19 +62,25 @@ func runIptables(args ...string) error {
 	cmd := exec.Command("iptables", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		// Suppress errors for:
-		// 1. Deletion (-D) of non-existent rules
-		// 2. Checking (-C) of non-existent rules
 		cmdStr := strings.Join(args, " ")
 		isCleanup := strings.Contains(cmdStr, "-D")
 		isCheck := strings.Contains(cmdStr, "-C")
 
-		// "Bad rule" or "Does a matching rule exist" are typical responses for missing rules
+		// "Bad rule" or "Does a matching rule exist" or "No chain/target/match"
 		isBenignError := (isCleanup || isCheck) && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule") || strings.Contains(string(out), "Does a matching rule exist"))
 
 		if isBenignError {
-			return nil // Return nil so ensureRule proceeds to add it
+			if isCheck {
+				// For Check (-C), we must return the error so the caller knows the rule is missing!
+				// But we don't log it because it's expected.
+				return fmt.Errorf("check failed (benign): %w", err)
+			}
+			if isCleanup {
+				// For Cleanup (-D), we return nil (success) because missing rule is fine.
+				return nil
+			}
 		}
+		// Real error: Log it
 		log.Printf("iptables error: %v, output: %s", err, string(out))
 		return fmt.Errorf("iptables failed: %w", err)
 	}
