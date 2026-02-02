@@ -455,7 +455,7 @@ func (m *Manager) GetStatus() []ProcessDTO {
 			tunPeer = p.ClientCfg.TunPeer
 		} else {
 			alias = p.ServerCfg.Alias
-			local = fmt.Sprintf(":%s", p.ServerCfg.LocalPort) // Server listens on port
+			local = fmt.Sprintf("0.0.0.0:%s", p.ServerCfg.LocalPort) // Server listens on all interfaces
 			remote = fmt.Sprintf("%s:%s", p.ServerCfg.RemoteAddr, p.ServerCfg.RemotePort)
 			tunLocal = p.ServerCfg.TunLocal
 			tunPeer = p.ServerCfg.TunPeer

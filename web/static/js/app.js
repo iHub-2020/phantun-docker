@@ -247,7 +247,6 @@ const app = {
                 <td>${this.escapeHtml(p.local || '-')}</td>
                 <td>${this.escapeHtml(p.remote || '-')}</td>
                 <td>${this.escapeHtml(p.tun_local || '-')} ↔ ${this.escapeHtml(p.tun_peer || '-')}</td>
-                <td>${p.pid || '-'}</td>
             </tr>
         `).join('');
     },
