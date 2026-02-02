@@ -307,105 +307,106 @@
                     <button class="btn btn-outline" onclick="app.resetConfigWithConfirm()">Reset</button>
                 </div>
             </div>
+        </div>
+        </div>
 
-            <!-- PAGE 3: Status (Moved Here) -->
-            <div id="statusPage" class="page-content" style="display:none;">
-                <!-- System Diagnostics -->
-                <div class="config-section">
-                    <div class="section-header">
-                        <div class="section-title">System Diagnostics</div>
-                    </div>
-                    <div class="section-body">
-                        <div class="diag-grid">
-                            <!-- Binaries Table -->
-                            <div class="diag-card">
-                                <div class="card-header">Core Binaries</div>
-                                <div class="table-wrapper">
-                                    <table class="data-table dense">
-                                        <thead>
-                                            <tr>
-                                                <th>Component</th>
-                                                <th>Status</th>
-                                                <th>MD5 Hash</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="diagBinariesBody">
-                                            <tr>
-                                                <td colspan="3">Loading...</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Interfaces Table -->
-                            <div class="diag-card">
-                                <div class="card-header">TUN Interfaces</div>
-                                <div class="table-wrapper">
-                                    <table class="data-table dense">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Status</th>
-                                                <th>IP Addresses</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="diagInterfacesBody">
-                                            <tr>
-                                                <td colspan="3">Loading...</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Firewall Table -->
-                            <div class="diag-card">
-                                <div class="card-header">Firewall Rules</div>
-                                <div class="table-wrapper">
-                                    <table class="data-table dense">
-                                        <thead>
-                                            <tr>
-                                                <th>Type</th>
-                                                <th>Active Rules</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="diagFirewallBody">
-                                            <tr>
-                                                <td colspan="3">Loading...</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- PAGE 3: Status (Moved Here) -->
+        <div id="statusPage" class="page-content" style="display:none;">
+            <!-- System Diagnostics -->
+            <div class="config-section">
+                <div class="section-header">
+                    <div class="section-title">System Diagnostics</div>
                 </div>
-
-                <!-- Logs -->
-                <div class="config-section">
-                    <div class="section-header">
-                        <div class="section-title">System Logs</div>
-                        <div class="diag-timestamp">Last: <span id="logTimestamp">--:--:--</span></div>
-                    </div>
-                    <div class="section-body no-padding">
-                        <div class="log-container">
-                            <pre class="log-content"
-                                id="logContent"><span class="log-line">Waiting for logs...</span></pre>
+                <div class="section-body">
+                    <div class="diag-grid">
+                        <!-- Binaries Table -->
+                        <div class="diag-card">
+                            <div class="card-header">Core Binaries</div>
+                            <div class="table-wrapper">
+                                <table class="data-table dense">
+                                    <thead>
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Status</th>
+                                            <th>MD5 Hash</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="diagBinariesBody">
+                                        <tr>
+                                            <td colspan="3">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="log-actions">
-                            <button class="btn btn-outline btn-sm" onclick="app.toggleLogStream()"><span
-                                    id="logStreamBtn">Start Refresh</span></button>
-                            <button class="btn btn-outline btn-sm" onclick="app.clearLogs()">Clear Logs</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.downloadLogs()">Download Logs</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToTop()">Scroll Top</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToBottom()">Scroll
-                                Bottom</button>
+
+                        <!-- Interfaces Table -->
+                        <div class="diag-card">
+                            <div class="card-header">TUN Interfaces</div>
+                            <div class="table-wrapper">
+                                <table class="data-table dense">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                            <th>IP Addresses</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="diagInterfacesBody">
+                                        <tr>
+                                            <td colspan="3">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Firewall Table -->
+                        <div class="diag-card">
+                            <div class="card-header">Firewall Rules</div>
+                            <div class="table-wrapper">
+                                <table class="data-table dense">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Active Rules</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="diagFirewallBody">
+                                        <tr>
+                                            <td colspan="3">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Logs -->
+            <div class="config-section">
+                <div class="section-header">
+                    <div class="section-title">System Logs</div>
+                    <div class="diag-timestamp">Last: <span id="logTimestamp">--:--:--</span></div>
+                </div>
+                <div class="section-body no-padding">
+                    <div class="log-container">
+                        <pre class="log-content" id="logContent"><span class="log-line">Waiting for logs...</span></pre>
+                    </div>
+                    <div class="log-actions">
+                        <button class="btn btn-outline btn-sm" onclick="app.toggleLogStream()"><span
+                                id="logStreamBtn">Start Refresh</span></button>
+                        <button class="btn btn-outline btn-sm" onclick="app.clearLogs()">Clear Logs</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.downloadLogs()">Download Logs</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToTop()">Scroll Top</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToBottom()">Scroll
+                            Bottom</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </main>
 
