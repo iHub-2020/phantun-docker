@@ -14,6 +14,7 @@ import (
 	"os"
 	"phantun-docker/internal/config"
 	"phantun-docker/internal/iptables"
+	"phantun-docker/internal/system"
 )
 
 // Process represents a running Phantun instance
@@ -191,7 +192,25 @@ func (m *Manager) StartAll() error {
 		return nil
 	}
 
-	// 2. Count Active Instances
+	// 2. CLEANUP ZOMBIE INTERFACES
+	// Before starting anything, we ensure only explicitly configured TUN interfaces exist.
+	allowedTuns := []string{}
+	for _, c := range m.cfg.Clients {
+		if c.TunName != "" {
+			allowedTuns = append(allowedTuns, c.TunName)
+		}
+	}
+	for _, s := range m.cfg.Servers {
+		if s.TunName != "" {
+			allowedTuns = append(allowedTuns, s.TunName)
+		}
+	}
+
+	if err := system.CleanupUnusedTunInterfaces(allowedTuns); err != nil {
+		log.Printf("Warning: Failed to cleanup zombie interfaces: %v", err)
+	}
+
+	// 3. Count Active Instances
 	activeCount := 0
 	for _, client := range m.cfg.Clients {
 		if client.Enabled {

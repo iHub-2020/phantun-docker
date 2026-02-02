@@ -1,7 +1,9 @@
 package system
 
 import (
+	"log"
 	"net"
+	"os/exec"
 	"strings"
 )
 
@@ -43,4 +45,36 @@ func GetTunInterfaces() ([]InterfaceInfo, error) {
 		}
 	}
 	return infos, nil
+}
+
+// CleanupUnusedTunInterfaces removes any tun* interface NOT present in the allowed list.
+// This prevents "Zombie Interfaces" from persisting after config changes.
+func CleanupUnusedTunInterfaces(allowedNames []string) error {
+	// 1. Get all TUN interfaces
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+
+	// Create map for O(1) lookup
+	allowed := make(map[string]bool)
+	for _, name := range allowedNames {
+		allowed[name] = true
+	}
+
+	for _, i := range ifaces {
+		// Only target "tun*" interfaces. Ignoring "lo", "eth0", etc.
+		if strings.HasPrefix(i.Name, "tun") {
+			// If not allowed, kill it.
+			if !allowed[i.Name] {
+				log.Printf("Cleaning up zombie interface: %s", i.Name)
+				cmd := exec.Command("ip", "link", "delete", i.Name)
+				if out, err := cmd.CombinedOutput(); err != nil {
+					log.Printf("Failed to delete interface %s: %v, output: %s", i.Name, err, string(out))
+					// Continue trying others even if one fails
+				}
+			}
+		}
+	}
+	return nil
 }
