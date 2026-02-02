@@ -100,6 +100,32 @@ const app = {
         }
     },
 
+    setupTabs() {
+        // 1. Restore Active Tab
+        const savedTabId = localStorage.getItem('activeTab') || 'dashboardPage';
+
+        // Find the button that targets this tab
+        // Iterate all tabs to find matching onclick
+        const tabs = document.querySelectorAll('.page-tab');
+        let targetBtn = tabs[0]; // Default to first
+
+        tabs.forEach(btn => {
+            if (btn.getAttribute('onclick').includes(`'${savedTabId}'`)) {
+                targetBtn = btn;
+            }
+            // Add click listener to save state
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+                localStorage.setItem('activeTab', targetId);
+            });
+        });
+
+        if (targetBtn) {
+            const targetId = targetBtn.getAttribute('onclick').match(/'([^']+)'/)[1];
+            this.switchTab(targetBtn, targetId);
+        }
+    },
+
     switchTab(btn, targetId) {
         // Deactivate all
         document.querySelectorAll('.page-tab').forEach(t => {
@@ -1003,6 +1029,16 @@ const app = {
         updateText('.header-title', 'Phantun Manager');
         updateText('[data-target="dashboardPage"]', 'Dashboard');
         updateText('[data-target="configPage"]', 'Configuration');
+    },
+
+    escapeHtml(text) {
+        if (!text) return '';
+        return text.toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     },
 
     initTheme() {
