@@ -211,9 +211,20 @@ func (m *Manager) StartAll() error {
 }
 
 func (m *Manager) startClient(c config.ClientConfig) error {
-	// 1. Setup Iptables
+	// 1. Setup Iptables (IPv4)
 	if err := iptables.SetupClient(c); err != nil {
 		return fmt.Errorf("iptables setup failed: %w", err)
+	}
+	// Setup IPv6 if enabled
+	if !c.IPv4Only {
+		// Use defaults if empty, matching Rust defaults
+		if c.TunPeerIPv6 == "" {
+			c.TunPeerIPv6 = "fcc8::2"
+		}
+		if err := iptables.SetupClientIPv6(c); err != nil {
+			log.Printf("Warning: Failed to setup IPv6 firewall for client %s: %v", c.Alias, err)
+			// Don't fail hard, user might not have IPv6
+		}
 	}
 
 	// 2. Start Binary
@@ -227,6 +238,23 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 		args = append(args, "--tun", c.TunName)
 	}
 
+	// Handle IPv6 / IPv4Only
+	if c.IPv4Only {
+		args = append(args, "--ipv4-only")
+	} else {
+		if c.TunLocalIPv6 != "" {
+			args = append(args, "--tun-local6", c.TunLocalIPv6)
+		}
+		if c.TunPeerIPv6 != "" {
+			args = append(args, "--tun-peer6", c.TunPeerIPv6)
+		}
+	}
+
+	// Handle Handshake
+	if c.HandshakeFile != "" {
+		args = append(args, "--handshake-packet", c.HandshakeFile)
+	}
+
 	cmd := exec.Command("phantun_client", args...)
 
 	// Capture output
@@ -235,6 +263,9 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 	if err := cmd.Start(); err != nil {
 		// Cleanup iptables on failure
 		iptables.CleanupClient(c)
+		if !c.IPv4Only {
+			iptables.CleanupClientIPv6(c)
+		}
 		return err
 	}
 
@@ -250,9 +281,18 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 }
 
 func (m *Manager) startServer(s config.ServerConfig) error {
-	// 1. Setup Iptables
+	// 1. Setup Iptables (IPv4)
 	if err := iptables.SetupServer(s); err != nil {
 		return fmt.Errorf("iptables setup failed: %w", err)
+	}
+	// Setup IPv6
+	if !s.IPv4Only {
+		if s.TunPeerIPv6 == "" {
+			s.TunPeerIPv6 = "fcc9::2"
+		}
+		if err := iptables.SetupServerIPv6(s); err != nil {
+			log.Printf("Warning: Failed to setup IPv6 firewall for server %s: %v", s.Alias, err)
+		}
 	}
 
 	args := []string{
@@ -265,6 +305,23 @@ func (m *Manager) startServer(s config.ServerConfig) error {
 		args = append(args, "--tun", s.TunName)
 	}
 
+	// Handle IPv6 / IPv4Only
+	if s.IPv4Only {
+		args = append(args, "--ipv4-only")
+	} else {
+		if s.TunLocalIPv6 != "" {
+			args = append(args, "--tun-local6", s.TunLocalIPv6)
+		}
+		if s.TunPeerIPv6 != "" {
+			args = append(args, "--tun-peer6", s.TunPeerIPv6)
+		}
+	}
+
+	// Handle Handshake
+	if s.HandshakeFile != "" {
+		args = append(args, "--handshake-packet", s.HandshakeFile)
+	}
+
 	cmd := exec.Command("phantun_server", args...)
 
 	// Capture output
@@ -272,6 +329,9 @@ func (m *Manager) startServer(s config.ServerConfig) error {
 
 	if err := cmd.Start(); err != nil {
 		iptables.CleanupServer(s)
+		if !s.IPv4Only {
+			iptables.CleanupServerIPv6(s)
+		}
 		return err
 	}
 

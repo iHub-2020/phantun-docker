@@ -72,6 +72,92 @@ func runIptables(args ...string) error {
 	return nil
 }
 
+func runIp6tables(args ...string) error {
+	cmd := exec.Command("ip6tables", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		// Don't log error if it's just deleting a non-existent rule
+		if strings.Contains(strings.Join(args, " "), "-D") && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule")) {
+			return nil
+		}
+		log.Printf("ip6tables error: %v, output: %s", err, string(out))
+		return fmt.Errorf("ip6tables failed: %w", err)
+	}
+	return nil
+}
+
+// ensureRuleIPv6 checks if a rule exists via ip6tables before adding it
+func ensureRuleIPv6(args ...string) error {
+	checkArgs := make([]string, len(args))
+	copy(checkArgs, args)
+
+	actionIndex := -1
+	for i, arg := range checkArgs {
+		if arg == "-A" || arg == "-I" {
+			checkArgs[i] = "-C"
+			actionIndex = i
+			break
+		}
+	}
+
+	if actionIndex != -1 {
+		if err := runIp6tables(checkArgs...); err == nil {
+			return nil
+		}
+	}
+	return runIp6tables(args...)
+}
+
+// SetupClientIPv6 applies ip6tables rules for Client mode (IPv6)
+func SetupClientIPv6(c config.ClientConfig) error {
+	// ip6tables -t nat -A POSTROUTING -s {tun_peer_ipv6}/128 -m comment --comment "phantun" -j MASQUERADE
+	return ensureRuleIPv6("-t", "nat", "-A", "POSTROUTING",
+		"-s", c.TunPeerIPv6+"/128",
+		"-m", "comment", "--comment", "phantun",
+		"-j", "MASQUERADE")
+}
+
+// CleanupClientIPv6 removes ip6tables rules for Client mode (IPv6)
+func CleanupClientIPv6(c config.ClientConfig) error {
+	return runIp6tables("-t", "nat", "-D", "POSTROUTING",
+		"-s", c.TunPeerIPv6+"/128",
+		"-m", "comment", "--comment", "phantun",
+		"-j", "MASQUERADE")
+}
+
+// SetupServerIPv6 applies ip6tables rules for Server mode (IPv6)
+func SetupServerIPv6(s config.ServerConfig) error {
+	// IPv6 DNAT
+	// ip6tables -t nat -A PREROUTING -p tcp --dport {local_port} ... -j DNAT ...
+	err := ensureRuleIPv6("-t", "nat", "-A", "PREROUTING",
+		"-p", "tcp", "--dport", s.LocalPort,
+		"-m", "comment", "--comment", "phantun",
+		"-j", "DNAT", "--to-destination", fmt.Sprintf("[%s]:%s", s.TunPeerIPv6, s.RemotePort))
+	if err != nil {
+		return err
+	}
+
+	// IPv6 MASQUERADE
+	return ensureRuleIPv6("-t", "nat", "-A", "POSTROUTING",
+		"-p", "tcp", "-d", s.TunPeerIPv6, "--dport", s.RemotePort,
+		"-m", "comment", "--comment", "phantun",
+		"-j", "MASQUERADE")
+}
+
+// CleanupServerIPv6 removes ip6tables rules for Server mode (IPv6)
+func CleanupServerIPv6(s config.ServerConfig) error {
+	runIp6tables("-t", "nat", "-D", "PREROUTING",
+		"-p", "tcp", "--dport", s.LocalPort,
+		"-m", "comment", "--comment", "phantun",
+		"-j", "DNAT", "--to-destination", fmt.Sprintf("[%s]:%s", s.TunPeerIPv6, s.RemotePort))
+
+	runIp6tables("-t", "nat", "-D", "POSTROUTING",
+		"-p", "tcp", "-d", s.TunPeerIPv6, "--dport", s.RemotePort,
+		"-m", "comment", "--comment", "phantun",
+		"-j", "MASQUERADE")
+	return nil
+}
+
 // ensureRule checks if a rule exists before adding it
 func ensureRule(args ...string) error {
 	// Construct check args: replace -A (Append) or -I (Insert) with -C (Check)

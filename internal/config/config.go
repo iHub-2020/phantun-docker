@@ -27,6 +27,7 @@ type ClientConfig struct {
 	TunPeerIPv6   string `json:"tun_peer_ipv6,omitempty"`
 	TunName       string `json:"tun_name,omitempty"`
 	HandshakeFile string `json:"handshake_file,omitempty"`
+	IPv4Only      bool   `json:"ipv4_only,omitempty"`
 }
 
 // ServerConfig holds Phantun Server settings
@@ -43,6 +44,7 @@ type ServerConfig struct {
 	TunPeerIPv6   string `json:"tun_peer_ipv6,omitempty"`
 	TunName       string `json:"tun_name,omitempty"`
 	HandshakeFile string `json:"handshake_file,omitempty"`
+	IPv4Only      bool   `json:"ipv4_only,omitempty"`
 }
 
 // Config represents the application configuration
