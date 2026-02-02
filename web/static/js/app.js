@@ -374,7 +374,155 @@ const app = {
         }
     },
 
-    // ... (openAddModal etc) ...
+    openAddModal(mode) {
+        this.currentMode = mode;
+        this.editingIndex = null;
+
+        document.getElementById('editModalTitle').textContent = mode === 'server' ? 'Add Server Instance' : 'Add Client Instance';
+        document.getElementById('deleteBtn').style.display = 'none'; // Hide delete on add
+
+        // Reset fields
+        document.getElementById('editEnable').checked = true;
+        document.getElementById('editAlias').value = '';
+        document.getElementById('editTunLocal').value = '';
+        document.getElementById('editTunPeer').value = '';
+        document.getElementById('editTunName').value = '';
+        document.getElementById('editTunLocalIPv6').value = '';
+        document.getElementById('editTunPeerIPv6').value = '';
+        document.getElementById('editHandshakeFile').value = '';
+
+        // Server fields
+        document.getElementById('editServerPort').value = '';
+        document.getElementById('editForwardIp').value = '';
+        document.getElementById('editForwardPort').value = '';
+
+        // Client fields
+        document.getElementById('editRemoteAddr').value = '';
+        document.getElementById('editRemotePort').value = '';
+        document.getElementById('editLocalPort').value = '';
+
+        this.showModalFields(mode);
+        this.openModal('editModal');
+    },
+
+    openEditModal(mode, index) {
+        this.currentMode = mode;
+        this.editingIndex = index;
+
+        document.getElementById('editModalTitle').textContent = mode === 'server' ? 'Edit Server Instance' : 'Edit Client Instance';
+        document.getElementById('deleteBtn').style.display = 'inline-block';
+
+        this.showModalFields(mode);
+        this.loadModalData(mode, index);
+        this.openModal('editModal');
+    },
+
+    showModalFields(mode) {
+        document.querySelectorAll('.server-field').forEach(el => el.style.display = mode === 'server' ? 'flex' : 'none');
+        document.querySelectorAll('.client-field').forEach(el => el.style.display = mode === 'client' ? 'flex' : 'none');
+        // Reset tabs to basic
+        this.switchModalTab('basic');
+    },
+
+    openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('active');
+            modal.style.display = 'flex'; // Ensure flex for centering
+        }
+    },
+
+    closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 200);
+        }
+    },
+
+    async deleteInstance() {
+        if (this.editingIndex === null) return;
+        if (!confirm('Delete this instance?')) return;
+        await this.deleteInstanceDirect(this.currentMode, this.editingIndex);
+        this.closeModal('editModal');
+    },
+
+    async deleteInstanceDirect(mode, index) {
+        try {
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
+            const config = await resp.json();
+
+            if (mode === 'server') {
+                config.servers.splice(index, 1);
+            } else {
+                config.clients.splice(index, 1);
+            }
+
+            await this.fetchWithError(CONFIG.API.CONFIG, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            this.showSuccess('Instance deleted');
+            this.loadConfig();
+        } catch (err) {
+            this.showError('Failed to delete', err.message);
+        }
+    },
+
+    importConfig(mode) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async ev => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    // Append imported items
+                    const resp = await this.fetchWithError(CONFIG.API.CONFIG);
+                    const config = await resp.json();
+
+                    if (mode === 'server') {
+                        if (Array.isArray(data)) config.servers.push(...data);
+                        else config.servers.push(data);
+                    } else {
+                        if (Array.isArray(data)) config.clients.push(...data);
+                        else config.clients.push(data);
+                    }
+
+                    await this.fetchWithError(CONFIG.API.CONFIG, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(config)
+                    });
+                    this.showSuccess('Configuration imported');
+                    this.loadConfig();
+                } catch (err) {
+                    this.showError('Import failed', 'Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    },
+
+    exportConfig(mode) {
+        // Export only the relevant section
+        const config = this.lastConfig || {};
+        const data = mode === 'server' ? config.servers : config.clients;
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phantun-${mode}-config.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    },
 
     async loadModalData(mode, index) {
         try {
@@ -566,20 +714,40 @@ const app = {
                 'Logout': 'Logout'
             },
             zh: {
-                'Phantun Manager': 'Phantun 管理器',
-                'Dashboard': '仪表板',
-                'Configuration': '配置',
-                'Service Status:': '服务状态：',
+                'Phantun Manager': 'Phantun 管理',
+                'Dashboard': '概览',
+                'Configuration': '常规设置',
+                'Service Status:': '运行状态：',
                 'Tunnel Status': '隧道状态',
                 'System Diagnostics': '系统诊断',
-                'Recent Logs': '最近日志',
+                'Recent Logs': '系统日志',
                 'Global Settings': '全局设置',
-                'Server Instances': '服务端实例',
-                'Client Instances': '客户端实例',
+                'Server Instances': '服务端',
+                'Client Instances': '客户端',
                 'Save & Apply': '保存并应用',
-                'Save Only': '仅保存',
+                'Save Only': '保存',
                 'Reset': '重置',
-                'Logout': '退出登录'
+                'Logout': '退出',
+                'Enable Service': '启用',
+                'Log Level': '日志等级',
+                'Name': '名称',
+                'Enabled': '启用',
+                'TCP Port': '监听端口 (TCP)',
+                'Forward IP': '转发地址 (UDP)',
+                'Forward Port': '转发端口',
+                'Actions': '操作',
+                'Server Addr': '服务器地址',
+                'Server Port': '服务器端口',
+                'Local Port': '本地监听端口',
+                'Add Server': '添加',
+                'Add Client': '添加',
+                'Master switch. If disabled, no instances will run.': '主开关。禁用后所有进程将停止。',
+                'Log verbosity (uses RUST_LOG env var).': '控制日志输出详细程度。',
+                'Server Mode Description': '服务端模式：监听本地 TCP 端口连接，并将流量转发至指定 UDP 服务。',
+                'Flow: Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service': '流量走向：远程客户端 -> [TCP 隧道] -> 本地服务端 -> 目标 UDP 服务',
+                'Client Mode Description': '客户端模式：监听本地 UDP 端口流量，通过 TCP 隧道转发至远程 Phantun 服务端。',
+                'Flow: Local UDP App -> Phantun Client -> [TCP Tunnel] -> Remote Phantun Server': '流量走向：本地 UDP 应用 -> 本地客户端 -> [TCP 隧道] -> 远程服务端',
+                'Critical Safety Information': '重要提示',
             }
         };
 

@@ -192,15 +192,11 @@
                 <div class="card-header d-flex justify-content-between align-items-center"
                     style="padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); font-weight: bold;">
                     <span data-i18n="Server Instances">Server Instances</span>
-                    <div class="header-actions">
-                        <button class="btn btn-sm btn-outline" onclick="app.importConfig('server')">Import</button>
-                        <button class="btn btn-sm btn-outline" onclick="app.exportConfig('server')">Export</button>
-                    </div>
                 </div>
                 <div class="card-body" style="padding: 15px;">
                     <div class="form-section-desc">
-                        <span data-i18n="Server Mode Description">Server Mode: OpenWrt listens for TCP connections from
-                            Phantun Client and forwards to local UDP service.</span><br>
+                        <span data-i18n="Server Mode Description">Server Mode: OpenWrt listens for TCP connections
+                            from Phantun Client and forwards to local UDP service.</span><br>
                         <span
                             data-i18n="Flow: Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service">Flow:
                             Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service</span>
@@ -220,9 +216,25 @@
                             <tbody id="serverTableBody"></tbody>
                         </table>
                     </div>
-                    <div class="mt-3">
+                    <div class="mt-3 d-flex gap-2">
                         <button class="btn btn-primary" onclick="app.openAddModal('server')" data-i18n="Add Server">Add
                             Server</button>
+                        <button class="btn btn-outline" onclick="app.importConfig('server')" title="Import">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right:0;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                        <button class="btn btn-outline" onclick="app.exportConfig('server')" title="Export">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right:0;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -233,14 +245,12 @@
                 <div class="card-header d-flex justify-content-between align-items-center"
                     style="padding: 10px 15px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); font-weight: bold;">
                     <span data-i18n="Client Instances">Client Instances</span>
-                    <div class="header-actions">
-                        <button class="btn btn-sm btn-outline" onclick="app.importConfig('client')">Import</button>
-                        <button class="btn btn-sm btn-outline" onclick="app.exportConfig('client')">Export</button>
-                    </div>
+
                 </div>
                 <div class="card-body" style="padding: 15px;">
                     <div class="form-section-desc">
-                        <span data-i18n="Client Mode Description">Client Mode: OpenWrt listens on local UDP and tunnel
+                        <span data-i18n="Client Mode Description">Client Mode: OpenWrt listens on local UDP and
+                            tunnel
                             to remote Phantun Server.</span><br>
                         <span
                             data-i18n="Flow: Local UDP App -> Phantun Client -> [TCP Tunnel] -> Remote Phantun Server">Flow:
@@ -261,9 +271,25 @@
                             <tbody id="clientTableBody"></tbody>
                         </table>
                     </div>
-                    <div class="mt-3">
+                    <div class="mt-3 d-flex gap-2">
                         <button class="btn btn-primary" onclick="app.openAddModal('client')" data-i18n="Add Client">Add
                             Client</button>
+                        <button class="btn btn-outline" onclick="app.importConfig('client')" title="Import">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right:0;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                        <button class="btn btn-outline" onclick="app.exportConfig('client')" title="Export">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right:0;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -366,7 +392,8 @@
                         <button class="btn btn-outline btn-sm" onclick="app.clearLogs()">Clear Logs</button>
                         <button class="btn btn-outline btn-sm" onclick="app.downloadLogs()">Download Logs</button>
                         <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToTop()">Scroll Top</button>
-                        <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToBottom()">Scroll Bottom</button>
+                        <button class="btn btn-outline btn-sm" onclick="app.scrollLogsToBottom()">Scroll
+                            Bottom</button>
                     </div>
                 </div>
             </div>
