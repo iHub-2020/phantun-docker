@@ -974,7 +974,9 @@ const app = {
             }
 
             // Node 2: Phantun (TUN IP)
-            const addrTun = item.tun_local || '...';
+            // Fix: Get from Runtime Status if available
+            const procStatus = this.getProcessStatus(item.id);
+            const addrTun = (procStatus && procStatus.tun_local) ? procStatus.tun_local : (item.tun_local || '...');
 
             const iconLocal = isServer ? '📦' : '💻';
             const labelLocal = isServer ? (t('topo.service') || 'Service') : (t('topo.app') || 'App');
@@ -1043,14 +1045,13 @@ const app = {
         container.innerHTML = html;
     },
 
-    isProcessRunning(configId, type) {
-        // Find in logic processes list (status data)
-        // Since loadConfig and loadStatus might be async out of sync, 
-        // we'll rely on the visual indicator matching 'enabled' for now, 
-        // OR ideally check against this.lastStatus
-        if (!this.lastStatus || !this.lastStatus.processes) return false;
+    getProcessStatus(configId) {
+        if (!this.lastStatus || !this.lastStatus.processes) return null;
+        return this.lastStatus.processes.find(p => p.id === configId);
+    },
 
-        const proc = this.lastStatus.processes.find(p => p.id === configId);
+    isProcessRunning(configId, type) {
+        const proc = this.getProcessStatus(configId);
         return proc ? proc.running : false;
     },
 
