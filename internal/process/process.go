@@ -317,6 +317,9 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 		return err
 	}
 
+	// Monitor for exit
+	go m.monitorProcess(c.ID, cmd)
+
 	m.processes[c.ID] = &Process{
 		ConfigID:  c.ID,
 		Cmd:       cmd,
@@ -391,6 +394,9 @@ func (m *Manager) startServer(s config.ServerConfig) error {
 		return err
 	}
 
+	// Monitor for exit
+	go m.monitorProcess(s.ID, cmd)
+
 	m.processes[s.ID] = &Process{
 		ConfigID:  s.ID,
 		Cmd:       cmd,
@@ -400,6 +406,21 @@ func (m *Manager) startServer(s config.ServerConfig) error {
 	}
 	log.Printf("Started Server %s (PID %d)", s.Alias, cmd.Process.Pid)
 	return nil
+}
+
+// monitorProcess waits for command to exit and removes it from the map
+func (m *Manager) monitorProcess(id string, cmd *exec.Cmd) {
+	err := cmd.Wait()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Only remove if it's the exact same command instance (checked by PID)
+	// This prevents race condition if a restart happened quickly and we removed the NEW process.
+	if p, exists := m.processes[id]; exists && p.Cmd.Process.Pid == cmd.Process.Pid {
+		log.Printf("Process %s (Type: %s) exited. Error: %v", id, p.Type, err)
+		delete(m.processes, id)
+	}
 }
 
 // GetStatus returns the list of running processes
