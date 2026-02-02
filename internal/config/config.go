@@ -1,7 +1,6 @@
 package config
 
 import (
-import (
 	"encoding/json"
 	"fmt"
 	"os"
@@ -90,21 +89,34 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 	cfg.Path = path
-	// Generate IDs if missing
+
+	// Generate IDs and Assignments if missing
 	saveNeeded := false
+	tunIndex := 0
+
 	for i := range cfg.Clients {
 		if cfg.Clients[i].ID == "" {
 			cfg.Clients[i].ID = uuid.New().String()
 			saveNeeded = true
 		}
+		// Auto-assign TUN name if empty to avoid ambiguity
+		if cfg.Clients[i].TunName == "" {
+			cfg.Clients[i].TunName = fmt.Sprintf("tun%d", tunIndex)
+			saveNeeded = true
+		}
+		tunIndex++
 	}
 	for i := range cfg.Servers {
 		if cfg.Servers[i].ID == "" {
 			cfg.Servers[i].ID = uuid.New().String()
 			saveNeeded = true
 		}
+		if cfg.Servers[i].TunName == "" {
+			cfg.Servers[i].TunName = fmt.Sprintf("tun%d", tunIndex)
+			saveNeeded = true
+		}
+		tunIndex++
 	}
-	cfg.Path = path
 
 	if saveNeeded {
 		// We ignore error here as it might be read-only,
