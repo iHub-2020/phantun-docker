@@ -29,11 +29,15 @@ type Process struct {
 
 // ProcessDTO for API
 type ProcessDTO struct {
-	ID      string `json:"id"`
-	Alias   string `json:"alias"`
-	Type    string `json:"type"`
-	PID     int    `json:"pid"`
-	Running bool   `json:"running"`
+	ID       string `json:"id"`
+	Alias    string `json:"alias"`
+	Type     string `json:"type"`
+	PID      int    `json:"pid"`
+	Running  bool   `json:"running"`
+	Local    string `json:"local"`
+	Remote   string `json:"remote"`
+	TunLocal string `json:"tun_local"`
+	TunPeer  string `json:"tun_peer"`
 }
 
 // LogMessage represents a log entry
@@ -438,18 +442,35 @@ func (m *Manager) GetStatus() []ProcessDTO {
 		}
 
 		alias := ""
+		local := ""
+		remote := ""
+		tunLocal := ""
+		tunPeer := ""
+
 		if p.Type == "client" {
 			alias = p.ClientCfg.Alias
+			local = fmt.Sprintf("%s:%s", p.ClientCfg.LocalAddr, p.ClientCfg.LocalPort)
+			remote = fmt.Sprintf("%s:%s", p.ClientCfg.RemoteAddr, p.ClientCfg.RemotePort)
+			tunLocal = p.ClientCfg.TunLocal
+			tunPeer = p.ClientCfg.TunPeer
 		} else {
 			alias = p.ServerCfg.Alias
+			local = fmt.Sprintf(":%s", p.ServerCfg.LocalPort) // Server listens on port
+			remote = fmt.Sprintf("%s:%s", p.ServerCfg.RemoteAddr, p.ServerCfg.RemotePort)
+			tunLocal = p.ServerCfg.TunLocal
+			tunPeer = p.ServerCfg.TunPeer
 		}
 
 		list = append(list, ProcessDTO{
-			ID:      p.ConfigID,
-			Alias:   alias,
-			Type:    p.Type,
-			PID:     p.Cmd.Process.Pid,
-			Running: running,
+			ID:       p.ConfigID,
+			Alias:    alias,
+			Type:     p.Type,
+			PID:      p.Cmd.Process.Pid,
+			Running:  running,
+			Local:    local,
+			Remote:   remote,
+			TunLocal: tunLocal,
+			TunPeer:  tunPeer,
 		})
 	}
 	return list
