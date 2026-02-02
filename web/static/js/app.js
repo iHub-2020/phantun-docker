@@ -965,19 +965,10 @@ const app = {
             let addr1, addrRemote;
 
             if (isServer) {
-                // Server Mode:
-                // Strict Consistency: Match the "Local" column in Status Table.
-                // Node 1 (Left) = Listening Address (0.0.0.0:5555)
                 addr1 = (item.local_addr || '0.0.0.0') + ':' + item.local_port;
-
-                // Node 4 (Right) = Source (Any IP)
-                // Fix: Ensure string fallback if t() fails
                 addrRemote = t('topo.any') || 'Any IP';
             } else {
-                // Client Mode:
-                // Node 1 (Left): The Local UDP Socket we bind (Local IP:Port)
                 addr1 = (item.local_addr || '127.0.0.1') + ':' + item.local_port;
-                // Node 4 (Right): The Remote Phantun Server we connect TO (Server IP:Port)
                 addrRemote = (item.remote_addr || '...') + ':' + item.remote_port;
             }
 
@@ -988,48 +979,49 @@ const app = {
             const labelLocal = isServer ? (t('topo.service') || 'Service') : (t('topo.app') || 'App');
             const modeLabel = type === 'client' ? 'Client' : 'Server';
 
+            // SVG ViewBox doubled to 1600x240 to accommodate 2x scale
             return `
             <div class="topo-row">
                 <div class="topo-label">
                     <span>${t(`topo.${type}`)}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
                     <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
                 </div>
-                <svg class="topo-svg" viewBox="0 0 800 120" preserveAspectRatio="xMidYMid meet">
+                <svg class="topo-svg" viewBox="0 0 1600 240" preserveAspectRatio="xMidYMid meet">
                     <!-- Layer 1: Fiber Connection -->
-                    <path d="M${x1} ${y} L${x4} ${y}" class="fiber-line ${fiberClass}"></path>
+                    <path d="M${x1} ${y} L${x4} ${y}" class="fiber-line ${fiberClass}" style="stroke-width:4px"></path>
 
                     <!-- === NODE 1: Local App/Service === -->
-                    <circle cx="${x1}" cy="${y}" r="22" class="node-circle ${type}"></circle>
-                    <text x="${x1}" y="${y}" class="node-icon" style="font-size:20px">${iconLocal}</text>
-                    <text x="${x1}" y="${y + 35}" class="node-text">${labelLocal}</text>
-                    <text x="${x1}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addr1)}</text>
+                    <circle cx="${x1}" cy="${y}" r="44" class="node-circle ${type}"></circle>
+                    <text x="${x1}" y="${y}" class="node-icon" style="font-size:40px">${iconLocal}</text>
+                    <text x="${x1}" y="${y + 70}" class="node-text" style="font-size:28px">${labelLocal}</text>
+                    <text x="${x1}" y="${y + 110}" class="node-subtext" style="font-size:24px; font-weight:bold;">${this.escapeHtml(addr1)}</text>
 
                     <!-- === NODE 2: Phantun Daemon (TUN IP) === -->
-                    <circle cx="${x2}" cy="${y}" r="24" class="node-circle" style="stroke:${color}; fill:#1e293b"></circle>
-                    <text x="${x2}" y="${y}" class="node-icon" style="font-size:24px">👻</text>
-                    <text x="${x2}" y="${y + 35}" class="node-text" style="fill:${color}">Phantun ${modeLabel}</text>
-                    <text x="${x2}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold; fill: #e2e8f0;">${this.escapeHtml(addrTun)}</text>
+                    <circle cx="${x2}" cy="${y}" r="48" class="node-circle" style="stroke:${color}; fill:#1e293b"></circle>
+                    <text x="${x2}" y="${y}" class="node-icon" style="font-size:48px">👻</text>
+                    <text x="${x2}" y="${y + 70}" class="node-text" style="fill:${color}; font-size:28px">Phantun ${modeLabel}</text>
+                    <text x="${x2}" y="${y + 110}" class="node-subtext" style="font-size:24px; font-weight:bold; fill: #e2e8f0;">${this.escapeHtml(addrTun)}</text>
                     
                     <!-- === NODE 3: TCP Tunnel (Stream) === -->
-                    <circle cx="${x3}" cy="${y}" r="22" class="node-circle internet"></circle>
-                    <text x="${x3}" y="${y}" class="node-icon" style="font-size:20px">🔗</text>
-                    <text x="${x3}" y="${y + 35}" class="node-text" style="fill:#94a3b8">TCP Tunnel</text>
-                    <text x="${x3}" y="${y + 55}" class="node-subtext" style="font-size:12px; opacity:0.7;">(Obfuscated)</text>
+                    <circle cx="${x3}" cy="${y}" r="44" class="node-circle internet"></circle>
+                    <text x="${x3}" y="${y}" class="node-icon" style="font-size:40px">🔗</text>
+                    <text x="${x3}" y="${y + 70}" class="node-text" style="fill:#94a3b8; font-size:28px">TCP Tunnel</text>
+                    <text x="${x3}" y="${y + 110}" class="node-subtext" style="font-size:24px; opacity:0.7;">(Obfuscated)</text>
 
                     <!-- === NODE 4: Remote Node === -->
-                    <circle cx="${x4}" cy="${y}" r="22" class="node-circle ${type}"></circle>
-                    <text x="${x4}" y="${y}" class="node-icon" style="font-size:20px">☁️</text>
-                    <text x="${x4}" y="${y + 35}" class="node-text">${t('topo.remote')}</text>
-                    <text x="${x4}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addrRemote)}</text>
+                    <circle cx="${x4}" cy="${y}" r="44" class="node-circle ${type}"></circle>
+                    <text x="${x4}" y="${y}" class="node-icon" style="font-size:40px">☁️</text>
+                    <text x="${x4}" y="${y + 70}" class="node-text" style="font-size:28px">${t('topo.remote')}</text>
+                    <text x="${x4}" y="${y + 110}" class="node-subtext" style="font-size:24px; font-weight:bold;">${this.escapeHtml(addrRemote)}</text>
 
                     ${statusClass === 'active' ? `
-                    <circle r="5" class="pulse-packet active">
+                    <circle r="10" class="pulse-packet active">
                         <animateMotion dur="3s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
-                    <circle r="5" class="pulse-packet active">
+                    <circle r="10" class="pulse-packet active">
                         <animateMotion dur="3s" begin="1s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
-                    <circle r="5" class="pulse-packet active">
+                    <circle r="10" class="pulse-packet active">
                         <animateMotion dur="3s" begin="2s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
                     ` : ''}

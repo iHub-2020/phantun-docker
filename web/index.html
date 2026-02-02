@@ -132,7 +132,7 @@
         </div>
 
         <!-- PAGE 2: Configuration -->
-        <div id="configPage" class="page-content" style="display:none;">
+        <div id="configPage" class="page-content compact-view" style="display:none;">
             <!-- Safety Warning -->
             <div class="safety-card">
                 <div class="safety-title">
@@ -158,7 +158,7 @@
                     <!-- Removed standalone description as per user request -->
 
                     <!-- Enable Service -->
-                    <div class="form-row" style="margin-bottom: 6px;">
+                    <div class="form-row">
                         <div class="form-label" data-i18n="Enable Service">Enable Service</div>
                         <div class="form-field">
                             <label class="checkbox-label">
@@ -170,7 +170,7 @@
                     </div>
 
                     <!-- Log Level -->
-                    <div class="form-row" style="margin-bottom: 0;">
+                    <div class="form-row">
                         <div class="form-label" data-i18n="Log Level">Log Level</div>
                         <div class="form-field">
                             <select id="logLevel" class="form-select" style="max-width: 200px;">
@@ -301,7 +301,7 @@
                     </div>
                 </div>
 
-                <div class="action-bar" style="margin-top: 20px;">
+                <div class="action-bar">
                     <button class="btn btn-primary" onclick="app.saveAndApply()">Save & Apply</button>
                     <button class="btn btn-secondary" onclick="app.saveOnly()">Save Only</button>
                     <button class="btn btn-outline" onclick="app.resetConfigWithConfirm()">Reset</button>

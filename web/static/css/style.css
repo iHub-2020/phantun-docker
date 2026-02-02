@@ -598,6 +598,37 @@ svg.topo-svg {
 }
 
 /* Utilities */
+.compact-view {
+    transform: scale(0.9);
+    transform-origin: top left;
+    width: 111.11%;
+    /* Compensate for scale(0.9) to fill width */
+    margin-bottom: -10%;
+    /* Reduce bottom gap caused by scaling */
+}
+
+/* Strict Row Alignment for Config */
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Vertical Center Alignment */
+    min-height: 52px;
+    /* Uniform Height forcing Enable Service & Log Level to match */
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* Subtle separator */
+}
+
+.action-bar {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    /* Divider Line */
+    display: flex;
+    gap: 12px;
+}
+
 .flex {
     display: flex;
 }
