@@ -50,6 +50,11 @@ func main() {
 	mgr := process.NewManager(cfg)
 	apiHandler := api.NewHandler(cfg, mgr)
 
+	// SETUP LOGGING: Redirect log.Println to both Stdout and Manager
+	// This ensures "Started Client..." messages appear in Web UI
+	logBroadcaster := &LogBroadcaster{Mgr: mgr}
+	log.SetOutput(io.MultiWriter(os.Stdout, logBroadcaster))
+
 	// STRICT LOGIC: Sanitize environment on startup
 	// We must remove ANY / ALL rules created by previous runs (crashes, restarts)
 	log.Println("Performing startup cleanup...")
@@ -210,5 +215,25 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	} else {
 		http.Error(w, "Invalid credentials", 401)
+	} else {
+		http.Error(w, "Invalid credentials", 401)
 	}
+}
+
+// LogBroadcaster adapts io.Writer to Manager.BroadcastLog
+type LogBroadcaster struct {
+	Mgr *process.Manager
+}
+
+func (lb *LogBroadcaster) Write(p []byte) (n int, err error) {
+	// We assume log output is line-based.
+	// But p might not contain newline or contain multiple.
+	// For simplicity, we just broadcast as "system" log.
+	lb.Mgr.BroadcastLog(process.LogMessage{
+		Timestamp: time.Now(),
+		ProcessID: "system",
+		Stream:    "stdout",
+		Content:   string(p),
+	})
+	return len(p), nil
 }

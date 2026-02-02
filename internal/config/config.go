@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 // GeneralConfig holds global settings
@@ -86,6 +88,29 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 	cfg.Path = path
+	// Generate IDs if missing
+	saveNeeded := false
+	for i := range cfg.Clients {
+		if cfg.Clients[i].ID == "" {
+			cfg.Clients[i].ID = uuid.New().String()
+			saveNeeded = true
+		}
+	}
+	for i := range cfg.Servers {
+		if cfg.Servers[i].ID == "" {
+			cfg.Servers[i].ID = uuid.New().String()
+			saveNeeded = true
+		}
+	}
+	cfg.Path = path
+
+	if saveNeeded {
+		// We ignore error here as it might be read-only,
+		// but we need IDs for runtime.
+		// If we can't save, we still proceed with in-memory IDs.
+		cfg.Save()
+	}
+
 	return &cfg, nil
 }
 
