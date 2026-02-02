@@ -1028,72 +1028,73 @@ const app = {
                 </svg>
             </div>
             `;
+        };
 
 
-            let html = '';
-            if (clients.length === 0 && servers.length === 0) {
-                html = '<div class="text-center text-secondary p-4">No instances configured.</div>';
-            } else {
-                clients.forEach((c, i) => html += createSvgRow(c, 'client', i));
-                servers.forEach((s, i) => html += createSvgRow(s, 'server', i));
-            }
-
-            container.innerHTML = html;
-        },
-
-            isProcessRunning(configId, type) {
-                // Find in logic processes list (status data)
-                // Since loadConfig and loadStatus might be async out of sync, 
-                // we'll rely on the visual indicator matching 'enabled' for now, 
-                // OR ideally check against this.lastStatus
-                if (!this.lastStatus || !this.lastStatus.processes) return false;
-
-                const proc = this.lastStatus.processes.find(p => p.id === configId);
-                return proc ? proc.running : false;
-            },
-
-                escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        },
-
-        // ===== HEADER TOOLBAR FUNCTIONS =====
-
-        toggleLanguage() {
-            const newLang = currentLang === 'en' ? 'zh' : 'en';
-            updateLanguage(newLang);
-            this.showSuccess(`Language switched to ${newLang === 'en' ? 'English' : '中文'}`);
-        },
-
-        toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme') || 'dark';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-
-            this.showSuccess(`Theme switched to ${newTheme} mode`);
-        },
-
-
-
-        initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            const savedLang = localStorage.getItem('lang') || 'en';
-
-            document.documentElement.setAttribute('data-theme', savedTheme);
-
-            const langText = document.querySelector('.btn-lang-text');
-            if (langText) {
-                langText.textContent = savedLang.toUpperCase();
-            }
+        let html = '';
+        if (clients.length === 0 && servers.length === 0) {
+            html = '<div class="text-center text-secondary p-4">No instances configured.</div>';
+        } else {
+            clients.forEach((c, i) => html += createSvgRow(c, 'client', i));
+            servers.forEach((s, i) => html += createSvgRow(s, 'server', i));
         }
-    };
 
-    // Initialize on DOM ready
-    document.addEventListener('DOMContentLoaded', () => {
-        app.initTheme();
-        app.init();
-    });
+        container.innerHTML = html;
+    },
+
+    isProcessRunning(configId, type) {
+        // Find in logic processes list (status data)
+        // Since loadConfig and loadStatus might be async out of sync, 
+        // we'll rely on the visual indicator matching 'enabled' for now, 
+        // OR ideally check against this.lastStatus
+        if (!this.lastStatus || !this.lastStatus.processes) return false;
+
+        const proc = this.lastStatus.processes.find(p => p.id === configId);
+        return proc ? proc.running : false;
+    },
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    // ===== HEADER TOOLBAR FUNCTIONS =====
+
+    toggleLanguage() {
+        const newLang = currentLang === 'en' ? 'zh' : 'en';
+        updateLanguage(newLang);
+        this.showSuccess(`Language switched to ${newLang === 'en' ? 'English' : '中文'}`);
+    },
+
+    toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        this.showSuccess(`Theme switched to ${newTheme} mode`);
+    },
+
+
+
+    initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedLang = localStorage.getItem('lang') || 'en';
+
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        const langText = document.querySelector('.btn-lang-text');
+        if (langText) {
+            langText.textContent = savedLang.toUpperCase();
+        }
+    }
+};
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+    app.initTheme();
+    app.init();
+});
