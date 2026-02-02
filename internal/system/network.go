@@ -11,7 +11,7 @@ type InterfaceInfo struct {
 	Addrs  []string `json:"addrs"`  // IPv6 or IPv4
 }
 
-// GetTunInterfaces returns status of all tun* interfaces
+// GetTunInterfaces returns status of all tun* or PointToPoint interfaces
 func GetTunInterfaces() ([]InterfaceInfo, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -20,7 +20,10 @@ func GetTunInterfaces() ([]InterfaceInfo, error) {
 
 	var infos []InterfaceInfo
 	for _, i := range ifaces {
-		if strings.HasPrefix(i.Name, "tun") {
+		// Check for PointToPoint flag OR "tun" prefix as fallback
+		isTun := (i.Flags&net.FlagPointToPoint != 0) || strings.HasPrefix(i.Name, "tun")
+
+		if isTun {
 			status := "DOWN"
 			if i.Flags&net.FlagUp != 0 {
 				status = "UP"

@@ -206,10 +206,10 @@
                             <thead>
                                 <tr>
                                     <th data-i18n="Name">Name</th>
-                                    <th data-i18n="Enabled" style="width: 60px;">Enable</th>
-                                    <th data-i18n="TCP Port">TCP Port</th>
-                                    <th data-i18n="Forward IP">Forward IP</th>
-                                    <th data-i18n="Forward Port">Forward Port</th>
+                                    <th data-i18n="Enabled" style="width: 80px;">Enable</th>
+                                    <th data-i18n="TCP Port" style="width: 15%;">TCP Port</th>
+                                    <th data-i18n="Forward IP" style="width: 20%;">Forward IP</th>
+                                    <th data-i18n="Forward Port" style="width: 15%;">Forward Port</th>
                                     <th data-i18n="Actions" style="width: 140px;">Actions</th>
                                 </tr>
                             </thead>
@@ -261,10 +261,10 @@
                             <thead>
                                 <tr>
                                     <th data-i18n="Name">Name</th>
-                                    <th data-i18n="Enabled" style="width: 60px;">Enable</th>
-                                    <th data-i18n="Server Addr">Server Addr</th>
-                                    <th data-i18n="Server Port">Server Port</th>
-                                    <th data-i18n="Local Port">Local Port</th>
+                                    <th data-i18n="Enabled" style="width: 80px;">Enable</th>
+                                    <th data-i18n="Server Addr" style="width: 20%;">Server Addr</th>
+                                    <th data-i18n="Server Port" style="width: 15%;">Server Port</th>
+                                    <th data-i18n="Local Port" style="width: 15%;">Local Port</th>
                                     <th data-i18n="Actions" style="width: 140px;">Actions</th>
                                 </tr>
                             </thead>
@@ -489,8 +489,7 @@
                         <div class="form-row">
                             <div class="form-label">Local UDP IP</div>
                             <div class="form-field">
-                                <input type="text" class="form-control" value="127.0.0.1" disabled
-                                    style="background: var(--bg-input); color: var(--text-secondary); cursor: not-allowed;">
+                                <input type="text" id="editLocalAddr" class="form-control" placeholder="127.0.0.1">
                                 <div class="form-help">Bind address for receiving UDP packets. WireGuard/OpenVPN uses
                                     127.0.0.1.</div>
                             </div>

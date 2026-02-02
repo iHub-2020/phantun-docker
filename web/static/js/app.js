@@ -400,6 +400,7 @@ const app = {
         document.getElementById('editRemoteAddr').value = '';
         document.getElementById('editRemotePort').value = '';
         document.getElementById('editLocalPort').value = '';
+        document.getElementById('editLocalAddr').value = '127.0.0.1';
 
         this.showModalFields(mode);
         this.openModal('editModal');
@@ -553,6 +554,8 @@ const app = {
                 document.getElementById('editRemoteAddr').value = data.remote_addr || '';
                 document.getElementById('editRemotePort').value = data.remote_port || '';
                 document.getElementById('editLocalPort').value = data.local_port || '';
+                // Fix Mapping: JSON local_addr -> UI editLocalAddr
+                document.getElementById('editLocalAddr').value = data.local_addr || '127.0.0.1';
             }
         } catch (err) {
             console.error('Failed to load instance data:', err);
@@ -599,6 +602,8 @@ const app = {
                 instance.remote_addr = document.getElementById('editRemoteAddr').value;
                 instance.remote_port = document.getElementById('editRemotePort').value;
                 instance.local_port = document.getElementById('editLocalPort').value;
+                // Fix Mapping: UI editLocalAddr -> JSON local_addr
+                instance.local_addr = document.getElementById('editLocalAddr').value || '127.0.0.1';
 
                 if (this.editingIndex !== null) {
                     config.clients[this.editingIndex] = instance;
@@ -621,6 +626,66 @@ const app = {
             console.error('Failed to save instance:', err);
             this.showError('Failed to save instance', err.message);
         }
+    },
+
+    // ===== LOG FUNCTIONS =====
+
+    startLogStream() {
+        if (this.logEventSource) return;
+
+        this.logEventSource = new EventSource(CONFIG.API.LOGS);
+
+        this.logEventSource.onmessage = (event) => {
+            try {
+                const log = JSON.parse(event.data);
+                this.appendLog(log);
+            } catch (e) {
+                // Ignore parse errors (like heartbeat)
+            }
+        };
+
+        this.logEventSource.onerror = (err) => {
+            console.error('Log stream error:', err);
+            this.stopLogStream();
+            // Retry after delay? For now just stop.
+        };
+
+        const btn = document.getElementById('logStreamBtn');
+        if (btn) btn.textContent = 'Pause Refresh';
+    },
+
+    stopLogStream() {
+        if (this.logEventSource) {
+            this.logEventSource.close();
+            this.logEventSource = null;
+        }
+        const btn = document.getElementById('logStreamBtn');
+        if (btn) btn.textContent = 'Start Refresh';
+    },
+
+    toggleLogStream() {
+        if (this.logEventSource) {
+            this.stopLogStream();
+        } else {
+            this.startLogStream();
+        }
+    },
+
+    downloadLogs() {
+        const content = document.getElementById('logContent').innerText;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phantun-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    },
+
+    scrollLogsToTop() {
+        const container = document.getElementById('logContent').parentElement;
+        container.scrollTop = 0;
     },
 
     async saveAndApply() {

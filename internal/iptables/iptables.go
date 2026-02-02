@@ -11,7 +11,7 @@ import (
 // SetupClient applies iptables rules for Client mode
 func SetupClient(c config.ClientConfig) error {
 	// iptables -t nat -A POSTROUTING -s {tun_peer}/32 -m comment --comment "phantun" -j MASQUERADE
-	return runIptables("-t", "nat", "-A", "POSTROUTING",
+	return ensureRule("-t", "nat", "-A", "POSTROUTING",
 		"-s", c.TunPeer+"/32",
 		"-m", "comment", "--comment", "phantun",
 		"-j", "MASQUERADE")
@@ -28,10 +28,7 @@ func CleanupClient(c config.ClientConfig) error {
 // SetupServer applies iptables rules for Server mode
 func SetupServer(s config.ServerConfig) error {
 	// 1. DNAT: TCP dport {local_port} -> {tun_peer}:{remote_port}
-	// Note: Phantun Server listens on TCP, but decapsulates to UDP to target?
-	// The init script uses TCP for DNAT.
-	// iptables -t nat -A PREROUTING -p tcp --dport {local_port} ... -j DNAT ...
-	err := runIptables("-t", "nat", "-A", "PREROUTING",
+	err := ensureRule("-t", "nat", "-A", "PREROUTING",
 		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
 		"-j", "DNAT", "--to-destination", fmt.Sprintf("%s:%s", s.TunPeer, s.RemotePort))
@@ -40,8 +37,7 @@ func SetupServer(s config.ServerConfig) error {
 	}
 
 	// 2. MASQUERADE: TCP dst {tun_peer} dport {remote_port}
-	// iptables -t nat -A POSTROUTING -p tcp -d {tun_peer} --dport {remote_port} -j MASQUERADE
-	return runIptables("-t", "nat", "-A", "POSTROUTING",
+	return ensureRule("-t", "nat", "-A", "POSTROUTING",
 		"-p", "tcp", "-d", s.TunPeer, "--dport", s.RemotePort,
 		"-m", "comment", "--comment", "phantun",
 		"-j", "MASQUERADE")
@@ -66,10 +62,41 @@ func runIptables(args ...string) error {
 	cmd := exec.Command("iptables", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		// Don't log error if it's just deleting a non-existent rule
+		if strings.Contains(strings.Join(args, " "), "-D") && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule")) {
+			return nil
+		}
 		log.Printf("iptables error: %v, output: %s", err, string(out))
 		return fmt.Errorf("iptables failed: %w", err)
 	}
 	return nil
+}
+
+// ensureRule checks if a rule exists before adding it
+func ensureRule(args ...string) error {
+	// Construct check args: replace -A (Append) or -I (Insert) with -C (Check)
+	checkArgs := make([]string, len(args))
+	copy(checkArgs, args)
+
+	actionIndex := -1
+	for i, arg := range checkArgs {
+		if arg == "-A" || arg == "-I" {
+			checkArgs[i] = "-C"
+			actionIndex = i
+			break
+		}
+	}
+
+	if actionIndex != -1 {
+		// Check if rule exists
+		if err := runIptables(checkArgs...); err == nil {
+			// Rule exists, do nothing
+			return nil
+		}
+	}
+
+	// Rule doesn't exist (or check failed), try to add it
+	return runIptables(args...)
 }
 
 // GetRules returns current iptables-save output
