@@ -215,8 +215,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	} else {
 		http.Error(w, "Invalid credentials", 401)
-	} else {
-		http.Error(w, "Invalid credentials", 401)
 	}
 }
 
