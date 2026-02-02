@@ -418,8 +418,8 @@ const app = {
     },
 
     showModalFields(mode) {
-        document.querySelectorAll('.server-field').forEach(el => el.style.display = mode === 'server' ? 'flex' : 'none');
-        document.querySelectorAll('.client-field').forEach(el => el.style.display = mode === 'client' ? 'flex' : 'none');
+        document.querySelectorAll('.server-field').forEach(el => el.style.display = mode === 'server' ? 'block' : 'none');
+        document.querySelectorAll('.client-field').forEach(el => el.style.display = mode === 'client' ? 'block' : 'none');
         // Reset tabs to basic
         this.switchModalTab('basic');
     },
@@ -536,6 +536,7 @@ const app = {
             document.getElementById('editTunPeer').value = data.tun_peer || '';
 
             // Advanced Fields
+            document.getElementById('editIPv4Only').checked = !!data.ipv4_only;
             document.getElementById('editTunName').value = data.tun_name || '';
             document.getElementById('editTunLocalIPv6').value = data.tun_local_ipv6 || '';
             document.getElementById('editTunPeerIPv6').value = data.tun_peer_ipv6 || '';
@@ -573,6 +574,7 @@ const app = {
                 tun_local: document.getElementById('editTunLocal').value,
                 tun_peer: document.getElementById('editTunPeer').value,
                 // Advanced
+                ipv4_only: document.getElementById('editIPv4Only').checked,
                 tun_name: document.getElementById('editTunName').value,
                 tun_local_ipv6: document.getElementById('editTunLocalIPv6').value,
                 tun_peer_ipv6: document.getElementById('editTunPeerIPv6').value,
@@ -621,7 +623,78 @@ const app = {
         }
     },
 
-    // ... 
+    async saveAndApply() {
+        try {
+            // First save global settings
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
+            const config = await resp.json();
+
+            config.general = config.general || {};
+            const enableEl = document.getElementById('enableService');
+            // Check if element exists before accessing checked
+            if (enableEl) {
+                config.general.enabled = enableEl.checked;
+            }
+            const logLevelEl = document.getElementById('logLevel');
+            if (logLevelEl) {
+                config.general.log_level = logLevelEl.value;
+            }
+
+            await this.fetchWithError(CONFIG.API.CONFIG, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+
+            // Then restart
+            await this.fetchWithError(CONFIG.API.ACTION_RESTART, { method: 'POST' });
+
+            this.showSuccess('Settings saved and service restarted');
+            this.loadConfig();
+            this.loadStatus();
+        } catch (err) {
+            this.showError('Failed to apply settings', err.message);
+        }
+    },
+
+    async saveOnly() {
+        try {
+            // Save global settings
+            const resp = await this.fetchWithError(CONFIG.API.CONFIG);
+            const config = await resp.json();
+
+            config.general = config.general || {};
+            const enableEl = document.getElementById('enableService');
+            if (enableEl) config.general.enabled = enableEl.checked;
+
+            const logLevelEl = document.getElementById('logLevel');
+            if (logLevelEl) config.general.log_level = logLevelEl.value;
+
+            await this.fetchWithError(CONFIG.API.CONFIG, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            this.showSuccess('Settings saved (not applied)');
+        } catch (err) {
+            this.showError('Failed to save', err.message);
+        }
+    },
+
+    async resetConfigWithConfirm() {
+        if (!confirm('Are you sure you want to reset all configuration? This cannot be undone.')) return;
+        try {
+            await this.fetchWithError(CONFIG.API.CONFIG, {
+                method: 'DELETE'
+            });
+            // Also restart?
+            await this.fetchWithError(CONFIG.API.ACTION_RESTART, { method: 'POST' });
+            this.showSuccess('Configuration reset');
+            this.loadConfig();
+        } catch (err) {
+            this.showError('Failed to reset', err.message);
+        }
+    },
 
     appendLog(log) {
         const container = document.getElementById('logContent');
