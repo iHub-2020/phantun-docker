@@ -26,6 +26,81 @@ const CONFIG = {
     }
 };
 
+// ===== TRANSLATIONS =====
+const TRANSLATIONS = {
+    en: {
+        "nav.dashboard": "Dashboard",
+        "nav.config": "Configuration",
+        "nav.status": "Status",
+        "nav.logout": "Logout",
+        "header.topology": "Network Topology",
+        "header.tunnel_status": "Tunnel Status Summary",
+        "table.name": "Name",
+        "table.mode": "Mode",
+        "table.status": "Status",
+        "table.local": "Local",
+        "table.remote": "Remote",
+        "topo.client": "CLIENT",
+        "topo.server": "SERVER",
+        "topo.local": "Local",
+        "topo.remote": "Remote",
+        "status.running": "Running",
+        "status.stopped": "Stopped",
+        "mode.client": "Client",
+        "mode.server": "Server",
+        "btn.toggle_lang": "EN"
+    },
+    zh: {
+        "nav.dashboard": "仪表盘",
+        "nav.config": "配置管理",
+        "nav.status": "系统状态",
+        "nav.logout": "退出登录",
+        "header.topology": "网络拓扑",
+        "header.tunnel_status": "隧道状态概览",
+        "table.name": "名称",
+        "table.mode": "模式",
+        "table.status": "状态",
+        "table.local": "本地地址",
+        "table.remote": "远端地址",
+        "topo.client": "客户端",
+        "topo.server": "服务端",
+        "topo.local": "本地",
+        "topo.remote": "远端",
+        "status.running": "运行中",
+        "status.stopped": "已停止",
+        "mode.client": "客户端",
+        "mode.server": "服务端",
+        "btn.toggle_lang": "中"
+    }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+
+function t(key) {
+    return (TRANSLATIONS[currentLang] || TRANSLATIONS.en)[key] || key;
+}
+
+function updateLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+
+    // 1. Static Elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+    });
+
+    // 2. Button Text
+    const btn = document.querySelector('.btn-lang-text');
+    if (btn) btn.textContent = lang === 'en' ? 'EN' : '中';
+
+    // 3. Dynamic Refresh
+    if (typeof app !== 'undefined') {
+        if (app.lastConfig) app.renderTopology(app.lastConfig.clients || [], app.lastConfig.servers || []);
+        if (app.lastStatus) app.updateTunnelStatus(app.lastStatus.processes || []);
+    }
+}
+
 // ===== APPLICATION =====
 // Phantun Manager Application
 const app = {
@@ -36,6 +111,7 @@ const app = {
 
     init() {
         this.setupTabs(); // Setup tabs with persistence
+        updateLanguage(currentLang); // Init I18n
         this.loadConfig();
         this.loadStatus();
         this.updateDiagnostics({}); // Init diagnostics empty
@@ -242,8 +318,8 @@ const app = {
         tbody.innerHTML = processes.map(p => `
             <tr>
                 <td>${this.escapeHtml(p.alias || p.id)}</td>
-                <td>${p.type === 'client' ? 'Client' : 'Server'}</td>
-                <td><span class="status-badge ${p.running ? 'running' : 'stopped'}">${p.running ? 'Running' : 'Stopped'}</span></td>
+                <td>${p.type === 'client' ? t('mode.client') : t('mode.server')}</td>
+                <td><span class="status-badge ${p.running ? 'running' : 'stopped'}">${p.running ? t('status.running') : t('status.stopped')}</span></td>
                 <td>${this.escapeHtml(p.local || '-')}</td>
                 <td>${this.escapeHtml(p.remote || '-')}</td>
             </tr>
@@ -868,7 +944,7 @@ const app = {
             return `
             <div class="topo-row">
                 <div class="topo-label">
-                    <span>${type.toUpperCase()}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
+                    <span>${t(`topo.${type}`)}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
                     <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
                 </div>
                 <svg class="topo-svg" viewBox="0 0 800 110" preserveAspectRatio="xMidYMid meet">
@@ -878,7 +954,7 @@ const app = {
                     <!-- === LOCAL NODE === -->
                     <circle cx="${xLocal}" cy="${y}" r="18" class="node-circle ${type}"></circle>
                     <text x="${xLocal}" y="${y}" class="node-icon">💻</text>
-                    <text x="${xLocal}" y="${y + 35}" class="node-text">Local</text>
+                    <text x="${xLocal}" y="${y + 35}" class="node-text">${t('topo.local')}</text>
                     <text x="${xLocal}" y="${y + 52}" class="node-subtext">${this.escapeHtml(addrLocal)}</text>
 
                     <!-- === TUN NODE (NIC Icon) === -->
@@ -892,7 +968,7 @@ const app = {
                     <!-- === REMOTE NODE === -->
                     <circle cx="${xRemote}" cy="${y}" r="18" class="node-circle ${type}"></circle>
                     <text x="${xRemote}" y="${y}" class="node-icon">☁️</text>
-                    <text x="${xRemote}" y="${y + 35}" class="node-text">Remote</text>
+                    <text x="${xRemote}" y="${y + 35}" class="node-text">${t('topo.remote')}</text>
                     <text x="${xRemote}" y="${y + 52}" class="node-subtext">${this.escapeHtml(addrRemote)}</text>
 
                     ${statusClass === 'active' ? `
@@ -942,18 +1018,8 @@ const app = {
     // ===== HEADER TOOLBAR FUNCTIONS =====
 
     toggleLanguage() {
-        const currentLang = localStorage.getItem('lang') || 'en';
         const newLang = currentLang === 'en' ? 'zh' : 'en';
-        localStorage.setItem('lang', newLang);
-
-        // Update button text
-        const langText = document.querySelector('.btn-lang-text');
-        if (langText) {
-            langText.textContent = newLang.toUpperCase();
-        }
-
-        // Apply translations
-        this.applyTranslations(newLang);
+        updateLanguage(newLang);
         this.showSuccess(`Language switched to ${newLang === 'en' ? 'English' : '中文'}`);
     },
 
@@ -968,106 +1034,78 @@ const app = {
         this.showSuccess(`Theme switched to ${newTheme} mode`);
     },
 
-    applyTranslations(lang) {
-        const translations = {
-            en: {
-                'Phantun Manager': 'Phantun Manager',
-                'Dashboard': 'Dashboard',
-                'Configuration': 'Configuration',
-                'Service Status:': 'Service Status:',
-                'Tunnel Status': 'Tunnel Status',
-                'System Diagnostics': 'System Diagnostics',
-                'Recent Logs': 'Recent Logs',
-                'Global Settings': 'Global Settings',
-                'Server Instances': 'Server Instances',
-                'Client Instances': 'Client Instances',
-                'Save & Apply': 'Save & Apply',
-                'Save Only': 'Save Only',
-                'Reset': 'Reset',
-                'Logout': 'Logout'
-            },
-            zh: {
-                'Phantun Manager': 'Phantun 管理',
-                'Dashboard': '概览',
-                'Configuration': '常规设置',
-                'Service Status:': '运行状态：',
-                'Tunnel Status': '隧道状态',
-                'System Diagnostics': '系统诊断',
-                'Recent Logs': '系统日志',
-                'Global Settings': '全局设置',
-                'Server Instances': '服务端',
-                'Client Instances': '客户端',
-                'Save & Apply': '保存并应用',
-                'Save Only': '保存',
-                'Reset': '重置',
-                'Logout': '退出',
-                'Enable Service': '启用',
-                'Log Level': '日志等级',
-                'Name': '名称',
-                'Enabled': '启用',
-                'TCP Port': '监听端口 (TCP)',
-                'Forward IP': '转发地址 (UDP)',
-                'Forward Port': '转发端口',
-                'Actions': '操作',
-                'Server Addr': '服务器地址',
-                'Server Port': '服务器端口',
-                'Local Port': '本地监听端口',
-                'Add Server': '添加',
-                'Add Client': '添加',
-                'Master switch. If disabled, no instances will run.': '主开关。禁用后所有进程将停止。',
-                'Log verbosity (uses RUST_LOG env var).': '控制日志输出详细程度。',
-                'Server Mode Description': '服务端模式：监听本地 TCP 端口连接，并将流量转发至指定 UDP 服务。',
-                'Flow: Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service': '流量走向：远程客户端 -> [TCP 隧道] -> 本地服务端 -> 目标 UDP 服务',
-                'Client Mode Description': '客户端模式：监听本地 UDP 端口流量，通过 TCP 隧道转发至远程 Phantun 服务端。',
-                'Flow: Local UDP App -> Phantun Client -> [TCP Tunnel] -> Remote Phantun Server': '流量走向：本地 UDP 应用 -> 本地客户端 -> [TCP 隧道] -> 远程服务端',
-                'Critical Safety Information': '重要提示',
-            }
+    // Old applyTranslations removed
+    // Legacy translation logic replaced by Global updateLanguage()
+    'Save Only': '保存',
+    'Reset': '重置',
+    'Logout': '退出',
+    'Enable Service': '启用',
+    'Log Level': '日志等级',
+    'Name': '名称',
+    'Enabled': '启用',
+    'TCP Port': '监听端口 (TCP)',
+    'Forward IP': '转发地址 (UDP)',
+    'Forward Port': '转发端口',
+    'Actions': '操作',
+    'Server Addr': '服务器地址',
+    'Server Port': '服务器端口',
+    'Local Port': '本地监听端口',
+    'Add Server': '添加',
+    'Add Client': '添加',
+    'Master switch. If disabled, no instances will run.': '主开关。禁用后所有进程将停止。',
+    'Log verbosity (uses RUST_LOG env var).': '控制日志输出详细程度。',
+    'Server Mode Description': '服务端模式：监听本地 TCP 端口连接，并将流量转发至指定 UDP 服务。',
+    'Flow: Remote Client -> [TCP Tunnel] -> Phantun Server -> Local UDP Service': '流量走向：远程客户端 -> [TCP 隧道] -> 本地服务端 -> 目标 UDP 服务',
+    'Client Mode Description': '客户端模式：监听本地 UDP 端口流量，通过 TCP 隧道转发至远程 Phantun 服务端。',
+    'Flow: Local UDP App -> Phantun Client -> [TCP Tunnel] -> Remote Phantun Server': '流量走向：本地 UDP 应用 -> 本地客户端 -> [TCP 隧道] -> 远程服务端',
+    'Critical Safety Information': '重要提示',
+}
         };
 
-        const t = translations[lang];
+const t = translations[lang];
 
-        // Apply translations to common elements
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            if (t[key]) {
-                el.textContent = t[key];
-            }
-        });
-
-        // Update specific elements by selector
-        const updateText = (sel, key) => {
-            const el = document.querySelector(sel);
-            if (el && t[key]) el.textContent = t[key];
-        };
-
-        updateText('.header-title', 'Phantun Manager');
-        updateText('[data-target="dashboardPage"]', 'Dashboard');
-        updateText('[data-target="configPage"]', 'Configuration');
-    },
-
-    escapeHtml(text) {
-        if (!text) return '';
-        return text.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    },
-
-    initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        const savedLang = localStorage.getItem('lang') || 'en';
-
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        const langText = document.querySelector('.btn-lang-text');
-        if (langText) {
-            langText.textContent = savedLang.toUpperCase();
-        }
-
-        this.applyTranslations(savedLang);
+// Apply translations to common elements
+document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) {
+        el.textContent = t[key];
     }
+});
+
+// Update specific elements by selector
+const updateText = (sel, key) => {
+    const el = document.querySelector(sel);
+    if (el && t[key]) el.textContent = t[key];
+};
+
+updateText('.header-title', 'Phantun Manager');
+updateText('[data-target="dashboardPage"]', 'Dashboard');
+updateText('[data-target="configPage"]', 'Configuration');
+    },
+
+escapeHtml(text) {
+    if (!text) return '';
+    return text.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+},
+
+initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const savedLang = localStorage.getItem('lang') || 'en';
+
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    const langText = document.querySelector('.btn-lang-text');
+    if (langText) {
+        langText.textContent = savedLang.toUpperCase();
+    }
+
+    this.applyTranslations(savedLang);
+}
 };
 
 // Initialize on DOM ready
