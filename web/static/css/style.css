@@ -473,6 +473,62 @@ svg.topo-svg {
     }
 }
 
+/* === HYBRID ANIMATION STYLES === */
+.fiber-line {
+    fill: none;
+    stroke: #0ea5e9;
+    /* Sky Blue Base */
+    stroke-width: 3;
+    stroke-dasharray: 10, 20;
+    stroke-linecap: round;
+    opacity: 0.3;
+    /* Subtle background */
+}
+
+/* Active State for Fiber */
+.fiber-line.active {
+    opacity: 0.5;
+    animation: fiberFlow 1s linear infinite;
+}
+
+/* Stopped State for Fiber */
+.fiber-line.stopped {
+    stroke: var(--accent-error);
+    stroke-dasharray: 0;
+    opacity: 0.5;
+    animation: none;
+}
+
+@keyframes fiberFlow {
+    to {
+        stroke-dashoffset: -30;
+    }
+}
+
+/* Pulsing Packets (Glow Green) */
+.pulse-packet {
+    fill: #4ade80;
+    /* Glow Green */
+    filter: drop-shadow(0 0 4px #4ade80) drop-shadow(0 0 8px #22c55e);
+    opacity: 0;
+}
+
+.pulse-packet.active {
+    animation: pulseSize 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulseSize {
+    from {
+        r: 3;
+        opacity: 0.6;
+    }
+
+    to {
+        r: 5;
+        opacity: 1;
+    }
+}
+
 /* Node Styling */
 .node-circle {
     fill: var(--bg-card);

@@ -859,16 +859,8 @@ const app = {
                     <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
                 </div>
                 <svg class="topo-svg" viewBox="0 0 800 80" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                        <linearGradient id="grad-${type}-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" style="stop-color:${color};stop-opacity:0.2" />
-                            <stop offset="50%" style="stop-color:${color};stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:${color};stop-opacity:0.2" />
-                        </linearGradient>
-                    </defs>
-
-                    <!-- Flow Line (Background) -->
-                    <path d="M${xLocal} ${y} L${xRemote} ${y}" class="flow-line ${statusClass}" style="stroke: ${statusClass === 'active' ? `url(#grad-${type}-${index})` : ''}"></path>
+                    <!-- Layer 1: Fiber Connection (Background) -->
+                    <path d="M${xLocal} ${y} L${xRemote} ${y}" class="fiber-line ${statusClass}"></path>
 
                     <!-- Nodes -->
                     <!-- Local Node -->
@@ -887,12 +879,15 @@ const app = {
                     <text x="${xRemote}" y="${y + 35}" class="node-text">Remote</text>
 
                     ${statusClass === 'active' ? `
-                    <!-- Traffic Particles (Animated) -->
-                    <circle r="3" class="traffic-dot">
-                        <animateMotion dur="2s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" />
+                    <!-- Layer 2: Data Packets (Activity) -->
+                    <circle r="4" class="pulse-packet active">
+                        <animateMotion dur="2.5s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
-                    <circle r="3" class="traffic-dot">
-                        <animateMotion dur="2s" begin="1s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" />
+                    <circle r="4" class="pulse-packet active">
+                        <animateMotion dur="2.5s" begin="0.8s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                    </circle>
+                    <circle r="4" class="pulse-packet active">
+                        <animateMotion dur="2.5s" begin="1.6s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
                     ` : ''}
                 </svg>
