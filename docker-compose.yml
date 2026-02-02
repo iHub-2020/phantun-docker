@@ -10,10 +10,10 @@ version: "3"
 services:
   phantun:
     # ================= 镜像配置 =================
-    # 使用 GitHub Container Registry 镜像
-    # image: ghcr.io/ihub-2020/phantun-docker:latest
+    # 使用自定义名称，防止与远程混淆
+    image: phantun-custom:latest
 
-    # 如果需要本地构建，注释上面的 image，取消下面的注释
+    # 启用本地构建
     build:
       context: .
       dockerfile: Dockerfile
