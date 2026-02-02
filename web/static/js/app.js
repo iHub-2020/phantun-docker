@@ -28,7 +28,7 @@ const CONFIG = {
 
 // ===== TRANSLATIONS =====
 const TRANSLATIONS = {
-    en: {
+    "en": {
         "nav.dashboard": "Dashboard",
         "nav.config": "Configuration",
         "nav.status": "Status",
@@ -50,7 +50,7 @@ const TRANSLATIONS = {
         "mode.server": "Server",
         "btn.toggle_lang": "EN"
     },
-    zh: {
+    "zh": {
         "nav.dashboard": "仪表盘",
         "nav.config": "配置管理",
         "nav.status": "系统状态",
@@ -77,7 +77,7 @@ const TRANSLATIONS = {
 let currentLang = localStorage.getItem('lang') || 'en';
 
 function t(key) {
-    return (TRANSLATIONS[currentLang] || TRANSLATIONS.en)[key] || key;
+    return (TRANSLATIONS[currentLang] || TRANSLATIONS['en'])[key] || key;
 }
 
 function updateLanguage(lang) {
@@ -94,11 +94,14 @@ function updateLanguage(lang) {
     const btn = document.querySelector('.btn-lang-text');
     if (btn) btn.textContent = lang === 'en' ? 'EN' : '中';
 
-    // 3. Dynamic Refresh
-    if (typeof app !== 'undefined') {
-        if (app.lastConfig) app.renderTopology(app.lastConfig.clients || [], app.lastConfig.servers || []);
-        if (app.lastStatus) app.updateTunnelStatus(app.lastStatus.processes || []);
-    }
+    // 3. Dynamic Refresh (Safety check for app existence)
+    // We defer this slightly to ensure app is initialized if called during load
+    setTimeout(() => {
+        if (typeof app !== 'undefined') {
+            if (app.lastConfig) app.renderTopology(app.lastConfig.clients || [], app.lastConfig.servers || []);
+            if (app.lastStatus) app.updateTunnelStatus(app.lastStatus.processes || []);
+        }
+    }, 10);
 }
 
 // ===== APPLICATION =====
