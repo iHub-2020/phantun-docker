@@ -211,6 +211,14 @@ func (m *Manager) StartAll() error {
 }
 
 func (m *Manager) startClient(c config.ClientConfig) error {
+	// 0. Apply Defaults
+	if c.TunLocal == "" {
+		c.TunLocal = "192.168.200.1"
+	}
+	if c.TunPeer == "" {
+		c.TunPeer = "192.168.200.2"
+	}
+
 	// 1. Setup Iptables (IPv4)
 	if err := iptables.SetupClient(c); err != nil {
 		return fmt.Errorf("iptables setup failed: %w", err)
@@ -281,6 +289,14 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 }
 
 func (m *Manager) startServer(s config.ServerConfig) error {
+	// 0. Apply Defaults
+	if s.TunLocal == "" {
+		s.TunLocal = "192.168.201.1"
+	}
+	if s.TunPeer == "" {
+		s.TunPeer = "192.168.201.2"
+	}
+
 	// 1. Setup Iptables (IPv4)
 	if err := iptables.SetupServer(s); err != nil {
 		return fmt.Errorf("iptables setup failed: %w", err)
