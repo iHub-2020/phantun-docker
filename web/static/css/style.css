@@ -345,14 +345,14 @@ h3 {
 
 .data-table th {
     text-align: left;
-    padding: 12px;
+    padding: 10px 24px;
     border-bottom: 1px solid var(--border);
     color: var(--text-secondary);
     font-size: 0.875rem;
 }
 
 .data-table td {
-    padding: 12px;
+    padding: 10px 24px;
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
 }
