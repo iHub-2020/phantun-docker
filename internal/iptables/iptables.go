@@ -43,9 +43,6 @@ func SetupServer(s config.ServerConfig) error {
 		"-j", "MASQUERADE"); err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 
 	// 3. FORWARD: Allow traffic to/from TUN interface (Safe against default DROP)
 	if err := ensureRule("-I", "FORWARD", "-i", s.TunName, "-j", "ACCEPT"); err != nil {
