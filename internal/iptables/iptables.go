@@ -210,26 +210,15 @@ func CleanupAll() error {
 
 	// 2. Parse lines to find Phantun rules
 	for _, line := range lines {
-		// Example line: -A POSTROUTING -s 192.168.200.1/32 -m comment --comment "phantun" -j MASQUERADE
-		if strings.Contains(line, "--comment \"phantun\"") {
-			// We only care about MASQUERADE and DNAT for now, to be safe
-			if strings.Contains(line, "-j MASQUERADE") || strings.Contains(line, "-j DNAT") {
-				// Convert "-A" to "-D"
-				// iptables-save output is like: -A CHAIN ...
-				// We need to construct: iptables -t nat -D CHAIN ...
-
-				// Basic parsing:
-				// Line starts with -A <CHAIN> <ARGS...>
-				// We want: -D <CHAIN> <ARGS...>
-
+		// Example line: -A POSTROUTING ... -m comment --comment phantun ...
+		// We detect "phantun" keyword in the line, and ensure it's a rule (starts with -A)
+		if strings.Contains(line, "phantun") && strings.HasPrefix(line, "-A") {
+			// We only care about MASQUERADE and DNAT for now
+			if strings.Contains(line, "MASQUERADE") || strings.Contains(line, "DNAT") {
 				parts := strings.Fields(line)
-				if len(parts) < 3 || parts[0] != "-A" {
+				if len(parts) < 3 {
 					continue
 				}
-
-				// Reconstruct args for deletion
-				// Note: iptables-save output usually doesn't include table name in the line,
-				// it's in the *nat header. We assume these are NAT rules because we only use NAT.
 
 				// Replace -A with -D
 				parts[0] = "-D"

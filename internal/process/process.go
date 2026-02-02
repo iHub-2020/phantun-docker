@@ -52,13 +52,17 @@ type Manager struct {
 	// Log broadcasting
 	logClients   map[chan LogMessage]bool
 	logClientsMu sync.Mutex
+	logBuffer    []LogMessage
+	logBufferMax int
 }
 
 func NewManager(cfg *config.Config) *Manager {
 	return &Manager{
-		processes:  make(map[string]*Process),
-		cfg:        cfg,
-		logClients: make(map[chan LogMessage]bool),
+		processes:    make(map[string]*Process),
+		cfg:          cfg,
+		logClients:   make(map[chan LogMessage]bool),
+		logBuffer:    make([]LogMessage, 0, 100),
+		logBufferMax: 100,
 	}
 }
 
@@ -66,6 +70,14 @@ func NewManager(cfg *config.Config) *Manager {
 func (m *Manager) BroadcastLog(msg LogMessage) {
 	m.logClientsMu.Lock()
 	defer m.logClientsMu.Unlock()
+
+	// Append to buffer
+	if len(m.logBuffer) >= m.logBufferMax {
+		// Shift
+		m.logBuffer = m.logBuffer[1:]
+	}
+	m.logBuffer = append(m.logBuffer, msg)
+
 	for ch := range m.logClients {
 		select {
 		case ch <- msg:
@@ -79,6 +91,15 @@ func (m *Manager) BroadcastLog(msg LogMessage) {
 func (m *Manager) SubscribeLogs() chan LogMessage {
 	ch := make(chan LogMessage, 100)
 	m.logClientsMu.Lock()
+
+	// Replay buffer
+	for _, msg := range m.logBuffer {
+		select {
+		case ch <- msg:
+		default:
+		}
+	}
+
 	m.logClients[ch] = true
 	m.logClientsMu.Unlock()
 	return ch
