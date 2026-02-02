@@ -246,7 +246,6 @@ const app = {
                 <td><span class="status-badge ${p.running ? 'running' : 'stopped'}">${p.running ? 'Running' : 'Stopped'}</span></td>
                 <td>${this.escapeHtml(p.local || '-')}</td>
                 <td>${this.escapeHtml(p.remote || '-')}</td>
-                <td>${this.escapeHtml(p.tun_local || '-')} ↔ ${this.escapeHtml(p.tun_peer || '-')}</td>
             </tr>
         `).join('');
     },
