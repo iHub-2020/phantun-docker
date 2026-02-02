@@ -148,8 +148,9 @@ const app = {
             target.setAttribute('aria-hidden', 'false');
 
             // Special handling for Dashboard Topology
-            if (targetId === 'dashboardPage' && typeof topology !== 'undefined') {
-                if (this.lastConfig) topology.render(this.lastConfig);
+            // Special handling for Dashboard Topology
+            if (targetId === 'dashboardPage') {
+                if (this.lastConfig) this.renderTopology(this.lastConfig.clients || [], this.lastConfig.servers || []);
                 else this.loadConfig();
             }
         }
@@ -206,8 +207,10 @@ const app = {
             this.updateDiagnostics(status); // Pass status to diagnostics
 
             // Update Topology Animation
-            if (typeof topology !== 'undefined') {
-                topology.updateStatus(status.processes || []);
+            // Update Topology Animation
+            this.lastStatus = status;
+            if (this.lastConfig) {
+                this.renderTopology(this.lastConfig.clients || [], this.lastConfig.servers || []);
             }
         } catch (err) {
             console.error('Failed to load status:', err);
