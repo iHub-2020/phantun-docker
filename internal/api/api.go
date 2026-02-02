@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"phantun-docker/internal/config"
 	"phantun-docker/internal/iptables"
 	"phantun-docker/internal/process"
@@ -29,6 +30,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/iptables", h.handleIptables)
 	mux.HandleFunc("GET /api/config", h.handleGetConfig)
 	mux.HandleFunc("POST /api/config", h.handleSaveConfig)
+	mux.HandleFunc("DELETE /api/config", h.handleResetConfig)
 	mux.HandleFunc("POST /api/action/restart", h.handleRestart)
 	mux.HandleFunc("GET /api/logs", h.handleLogs)
 }
@@ -139,4 +141,21 @@ func (h *Handler) handleLogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func (h *Handler) handleResetConfig(w http.ResponseWriter, r *http.Request) {
+	// 1. Delete config file
+	if err := os.Remove(h.Config.Path); err != nil && !os.IsNotExist(err) {
+		http.Error(w, "Failed to delete config file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 2. Reset in-memory config to defaults
+	defaults := config.DefaultConfig()
+	h.Config.Update(defaults.General, defaults.Clients, defaults.Servers)
+
+	// 3. Stop all processes immediately
+	h.Manager.StopAll()
+
+	w.WriteHeader(http.StatusOK)
 }
