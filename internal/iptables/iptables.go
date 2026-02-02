@@ -62,9 +62,18 @@ func runIptables(args ...string) error {
 	cmd := exec.Command("iptables", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		// Don't log error if it's just deleting a non-existent rule
-		if strings.Contains(strings.Join(args, " "), "-D") && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule")) {
-			return nil
+		// Suppress errors for:
+		// 1. Deletion (-D) of non-existent rules
+		// 2. Checking (-C) of non-existent rules
+		cmdStr := strings.Join(args, " ")
+		isCleanup := strings.Contains(cmdStr, "-D")
+		isCheck := strings.Contains(cmdStr, "-C")
+
+		// "Bad rule" or "Does a matching rule exist" are typical responses for missing rules
+		isBenignError := (isCleanup || isCheck) && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule") || strings.Contains(string(out), "Does a matching rule exist"))
+
+		if isBenignError {
+			return nil // Return nil so ensureRule proceeds to add it
 		}
 		log.Printf("iptables error: %v, output: %s", err, string(out))
 		return fmt.Errorf("iptables failed: %w", err)
@@ -76,8 +85,16 @@ func runIp6tables(args ...string) error {
 	cmd := exec.Command("ip6tables", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		// Don't log error if it's just deleting a non-existent rule
-		if strings.Contains(strings.Join(args, " "), "-D") && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule")) {
+		// Suppress errors for:
+		// 1. Deletion (-D) of non-existent rules
+		// 2. Checking (-C) of non-existent rules
+		cmdStr := strings.Join(args, " ")
+		isCleanup := strings.Contains(cmdStr, "-D")
+		isCheck := strings.Contains(cmdStr, "-C")
+
+		isBenignError := (isCleanup || isCheck) && (strings.Contains(string(out), "No chain/target/match") || strings.Contains(string(out), "Bad rule") || strings.Contains(string(out), "Does a matching rule exist"))
+
+		if isBenignError {
 			return nil
 		}
 		log.Printf("ip6tables error: %v, output: %s", err, string(out))
