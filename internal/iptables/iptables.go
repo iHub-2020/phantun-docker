@@ -27,11 +27,11 @@ func CleanupClient(c config.ClientConfig) error {
 
 // SetupServer applies iptables rules for Server mode
 func SetupServer(s config.ServerConfig) error {
-	// 1. DNAT: TCP dport {local_port} -> {tun_local}:{local_port}
+	// 1. DNAT: TCP dport {local_port} -> {tun_peer}:{local_port}
 	err := ensureRule("-t", "nat", "-A", "PREROUTING",
 		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
-		"-j", "DNAT", "--to-destination", s.TunLocal)
+		"-j", "DNAT", "--to-destination", s.TunPeer)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func CleanupServer(s config.ServerConfig) error {
 	runIptables("-t", "nat", "-D", "PREROUTING",
 		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
-		"-j", "DNAT", "--to-destination", s.TunLocal)
+		"-j", "DNAT", "--to-destination", s.TunPeer)
 
 	runIptables("-t", "nat", "-D", "POSTROUTING",
 		"-p", "tcp", "-d", s.TunPeer, "--dport", s.RemotePort,
@@ -170,7 +170,7 @@ func SetupServerIPv6(s config.ServerConfig) error {
 	err := ensureRuleIPv6("-t", "nat", "-A", "PREROUTING",
 		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
-		"-j", "DNAT", "--to-destination", s.TunLocalIPv6)
+		"-j", "DNAT", "--to-destination", s.TunPeerIPv6)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func CleanupServerIPv6(s config.ServerConfig) error {
 	runIp6tables("-t", "nat", "-D", "PREROUTING",
 		"-p", "tcp", "--dport", s.LocalPort,
 		"-m", "comment", "--comment", "phantun",
-		"-j", "DNAT", "--to-destination", s.TunLocalIPv6)
+		"-j", "DNAT", "--to-destination", s.TunPeerIPv6)
 
 	runIp6tables("-t", "nat", "-D", "POSTROUTING",
 		"-p", "tcp", "-d", s.TunPeerIPv6, "--dport", s.RemotePort,
