@@ -46,6 +46,7 @@ const TRANSLATIONS = {
         "topo.remote": "Remote",
         "topo.app": "App",
         "topo.service": "Service",
+        "topo.any": "Any IP",
         "status.running": "Running",
         "status.stopped": "Stopped",
         "mode.client": "Client",
@@ -70,6 +71,7 @@ const TRANSLATIONS = {
         "topo.remote": "远端",
         "topo.app": "应用",
         "topo.service": "服务",
+        "topo.any": "任意IP",
         "status.running": "运行中",
         "status.stopped": "已停止",
         "mode.client": "客户端",
@@ -964,9 +966,12 @@ const app = {
 
             if (isServer) {
                 // Server Mode:
-                // Node 1 (Left): The UDP Service we forward TO (Forward To IP:Port)
-                addr1 = (item.remote_addr || '127.0.0.1') + ':' + item.remote_port;
-                // Node 4 (Right): The Remote TCP Client connecting to us (Any IP)
+                // Strict Consistency: Match the "Local" column in Status Table.
+                // Node 1 (Left) = Listening Address (0.0.0.0:5555)
+                addr1 = (item.local_addr || '0.0.0.0') + ':' + item.local_port;
+
+                // Node 4 (Right) = Source (Any IP)
+                // Fix: Ensure string fallback if t() fails
                 addrRemote = t('topo.any') || 'Any IP';
             } else {
                 // Client Mode:
