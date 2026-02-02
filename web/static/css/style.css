@@ -578,6 +578,14 @@ svg.topo-svg {
     text-anchor: middle;
 }
 
+.node-subtext {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: #64748b;
+    /* Muted Slate */
+    text-anchor: middle;
+}
+
 .traffic-dot {
     fill: var(--accent-success);
     filter: drop-shadow(0 0 4px var(--accent-success));
