@@ -849,8 +849,17 @@ const app = {
             const xPhantun = 400; // Center
             const xRemote = 740;
 
-            // Colors
+            // Colors & Direction
             const color = type === 'client' ? '#06b6d4' : '#f59e0b'; // Cyan vs Amber
+            const isServer = type === 'server';
+
+            // Animation Path: Client = Outbound (L->R), Server = Inbound (R->L)
+            const animPath = isServer
+                ? `M${xRemote} ${y} L${xLocal} ${y}`
+                : `M${xLocal} ${y} L${xRemote} ${y}`;
+
+            // Fiber Class: Reverse animation for server
+            const fiberClass = `${statusClass} ${isServer ? 'reverse' : ''}`;
 
             return `
             <div class="topo-row">
@@ -860,7 +869,7 @@ const app = {
                 </div>
                 <svg class="topo-svg" viewBox="0 0 800 80" preserveAspectRatio="xMidYMid meet">
                     <!-- Layer 1: Fiber Connection (Background) -->
-                    <path d="M${xLocal} ${y} L${xRemote} ${y}" class="fiber-line ${statusClass}"></path>
+                    <path d="M${xLocal} ${y} L${xRemote} ${y}" class="fiber-line ${fiberClass}"></path>
 
                     <!-- Nodes -->
                     <!-- Local Node -->
@@ -881,13 +890,13 @@ const app = {
                     ${statusClass === 'active' ? `
                     <!-- Layer 2: Data Packets (Activity) -->
                     <circle r="4" class="pulse-packet active">
-                        <animateMotion dur="2.5s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                        <animateMotion dur="2.5s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
                     <circle r="4" class="pulse-packet active">
-                        <animateMotion dur="2.5s" begin="0.8s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                        <animateMotion dur="2.5s" begin="0.8s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
                     <circle r="4" class="pulse-packet active">
-                        <animateMotion dur="2.5s" begin="1.6s" repeatCount="indefinite" path="M${xLocal} ${y} L${xRemote} ${y}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                        <animateMotion dur="2.5s" begin="1.6s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
                     ` : ''}
                 </svg>

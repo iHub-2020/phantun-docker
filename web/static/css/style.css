@@ -499,6 +499,11 @@ svg.topo-svg {
     animation: none;
 }
 
+/* Reverse Flow for Server (Inbound) */
+.fiber-line.reverse {
+    animation-direction: reverse;
+}
+
 @keyframes fiberFlow {
     to {
         stroke-dashoffset: -30;
