@@ -2171,3 +2171,25 @@ input[type="checkbox"] {
 .form-field {
     width: 100%;
 }
+
+/* Topology Scroll Repair */
+#topology-map {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    /* Firefox */
+}
+
+#topology-map::-webkit-scrollbar {
+    width: 6px;
+}
+
+#topology-map::-webkit-scrollbar-thumb {
+    background-color: var(--border-light);
+    border-radius: 4px;
+}
+
+#topology-map::-webkit-scrollbar-track {
+    background-color: var(--bg-card);
+}
