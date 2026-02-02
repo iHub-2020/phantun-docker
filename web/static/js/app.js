@@ -842,23 +842,26 @@ const app = {
             let statusClass = 'disabled';
             if (isEnabled) statusClass = isRunning ? 'active' : 'stopped';
 
-            // Coordinates (ViewBox 0 0 800 80)
+            // Coordinates (Increased ViewBox height)
             const y = 40;
-            const xLocal = 60;
-            const xPhantun = 400; // Center
-            const xRemote = 740;
+            const xLocal = 100;
+            const xTun = 400; // Center
+            const xRemote = 700;
 
             // Colors & Direction
-            const color = type === 'client' ? '#06b6d4' : '#f59e0b'; // Cyan vs Amber
+            const color = type === 'client' ? '#06b6d4' : '#f59e0b';
             const isServer = type === 'server';
 
-            // Animation Path: Client = Outbound (L->R), Server = Inbound (R->L)
             const animPath = isServer
                 ? `M${xRemote} ${y} L${xLocal} ${y}`
                 : `M${xLocal} ${y} L${xRemote} ${y}`;
 
-            // Fiber Class: Reverse animation for server
             const fiberClass = `${statusClass} ${isServer ? 'reverse' : ''}`;
+
+            // Data for labels
+            const addrLocal = item.local || '...';
+            const addrTun = item.tun_local || '...';
+            const addrRemote = item.remote || '...';
 
             return `
             <div class="topo-row">
@@ -866,28 +869,31 @@ const app = {
                     <span>${type.toUpperCase()}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
                     <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
                 </div>
-                <svg class="topo-svg" viewBox="0 0 800 80" preserveAspectRatio="xMidYMid meet">
-                    <!-- Layer 1: Fiber Connection (Background) -->
+                <svg class="topo-svg" viewBox="0 0 800 110" preserveAspectRatio="xMidYMid meet">
+                    <!-- Layer 1: Fiber Connection -->
                     <path d="M${xLocal} ${y} L${xRemote} ${y}" class="fiber-line ${fiberClass}"></path>
 
-                    <!-- Nodes -->
-                    <!-- Local Node -->
+                    <!-- === LOCAL NODE === -->
                     <circle cx="${xLocal}" cy="${y}" r="18" class="node-circle ${type}"></circle>
                     <text x="${xLocal}" y="${y}" class="node-icon">💻</text>
                     <text x="${xLocal}" y="${y + 35}" class="node-text">Local</text>
+                    <text x="${xLocal}" y="${y + 52}" class="node-subtext">${this.escapeHtml(addrLocal)}</text>
 
-                    <!-- Phantun Node (Middle) -->
-                    <circle cx="${xPhantun}" cy="${y}" r="22" class="node-circle" style="stroke: ${color}"></circle>
-                    <text x="${xPhantun}" y="${y}" class="node-icon">🛡️</text>
-                    <text x="${xPhantun}" y="${y + 38}" class="node-text">Phantun</text>
+                    <!-- === TUN NODE (NIC Icon) === -->
+                    <circle cx="${xTun}" cy="${y}" r="22" class="node-circle" style="stroke: ${color}; fill: #0f172a;"></circle>
+                    <g transform="translate(${xTun - 12}, ${y - 12}) scale(1.0)">
+                        <path fill="${color}" d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm2 4v4h4V6H6zm6 0v4h4V6h-4zm-6 6v4h4v-4H6zm6 0v4h4v-4h-4z"/> 
+                    </g>
+                    <text x="${xTun}" y="${y + 40}" class="node-text" style="font-weight:bold; fill:${color}">TUN</text>
+                    <text x="${xTun}" y="${y + 57}" class="node-subtext">${this.escapeHtml(addrTun)}</text>
 
-                    <!-- Remote Node -->
+                    <!-- === REMOTE NODE === -->
                     <circle cx="${xRemote}" cy="${y}" r="18" class="node-circle ${type}"></circle>
                     <text x="${xRemote}" y="${y}" class="node-icon">☁️</text>
                     <text x="${xRemote}" y="${y + 35}" class="node-text">Remote</text>
+                    <text x="${xRemote}" y="${y + 52}" class="node-subtext">${this.escapeHtml(addrRemote)}</text>
 
                     ${statusClass === 'active' ? `
-                    <!-- Layer 2: Data Packets (Activity) -->
                     <circle r="4" class="pulse-packet active">
                         <animateMotion dur="2.5s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
