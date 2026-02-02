@@ -923,26 +923,35 @@ const app = {
             let statusClass = 'disabled';
             if (isEnabled) statusClass = isRunning ? 'active' : 'stopped';
 
-            // Coordinates (Wider spacing)
+            // Coordinates (4 Distinct Nodes)
             const y = 40;
-            const xLocal = 50;     // Moved closer to edge
-            const xTun = 400;      // Center
-            const xRemote = 750;   // Moved closer to edge
+            const x1 = 60;   // Local App/Service
+            const x2 = 280;  // Phantun Local
+            const x3 = 520;  // TCP Tunnel
+            const x4 = 740;  // Remote Node
 
             // Colors & Direction
             const color = type === 'client' ? '#06b6d4' : '#f59e0b';
             const isServer = type === 'server';
 
+            // Animation Path
             const animPath = isServer
-                ? `M${xRemote} ${y} L${xLocal} ${y}`
-                : `M${xLocal} ${y} L${xRemote} ${y}`;
+                ? `M${x4} ${y} L${x1} ${y}`
+                : `M${x1} ${y} L${x4} ${y}`;
 
             const fiberClass = `${statusClass} ${isServer ? 'reverse' : ''}`;
 
-            // Data for labels (Priority: Realtime Process Data > Config Data > Placeholder)
-            const addrLocal = proc?.local || (item.local_addr ? `${item.local_addr}:${item.local_port}` : '...');
+            // Data for labels
+            // Node 1: UDP Interface (Local IP)
+            const addr1 = proc?.local || (item.local_addr ? `${item.local_addr}:${item.local_port}` : '...');
+            // Node 2/3: Tunnel Interface
             const addrTun = proc?.tun_local || item.tun_local || '...';
+            // Node 4: Remote Address
             const addrRemote = proc?.remote || (item.remote_addr ? `${item.remote_addr}:${item.remote_port}` : '...');
+
+            const iconLocal = isServer ? '📦' : '💻';
+            const labelLocal = isServer ? (t('topo.service') || 'Service') : (t('topo.app') || 'App');
+            const modeLabel = type === 'client' ? 'Client' : 'Server';
 
             return `
             <div class="topo-row">
@@ -950,39 +959,42 @@ const app = {
                     <span>${t(`topo.${type}`)}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
                     <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
                 </div>
-                <svg class="topo-svg" viewBox="0 0 800 110" preserveAspectRatio="xMidYMid meet">
+                <svg class="topo-svg" viewBox="0 0 800 120" preserveAspectRatio="xMidYMid meet">
                     <!-- Layer 1: Fiber Connection -->
-                    <path d="M${xLocal} ${y} L${xRemote} ${y}" class="fiber-line ${fiberClass}"></path>
+                    <path d="M${x1} ${y} L${x4} ${y}" class="fiber-line ${fiberClass}"></path>
 
-                    <!-- === LOCAL NODE === -->
-                    <circle cx="${xLocal}" cy="${y}" r="18" class="node-circle ${type}"></circle>
-                    <text x="${xLocal}" y="${y}" class="node-icon">💻</text>
-                    <text x="${xLocal}" y="${y + 35}" class="node-text">${t('topo.local')}</text>
-                    <text x="${xLocal}" y="${y + 52}" class="node-subtext">${this.escapeHtml(addrLocal)}</text>
+                    <!-- === NODE 1: Local UDP App/Service === -->
+                    <circle cx="${x1}" cy="${y}" r="22" class="node-circle ${type}"></circle>
+                    <text x="${x1}" y="${y}" class="node-icon" style="font-size:20px">${iconLocal}</text>
+                    <text x="${x1}" y="${y + 35}" class="node-text">${labelLocal}</text>
+                    <text x="${x1}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addr1)}</text>
 
-                    <!-- === TUN NODE (NIC Icon) === -->
-                    <circle cx="${xTun}" cy="${y}" r="22" class="node-circle" style="stroke: ${color}; fill: #0f172a;"></circle>
-                    <g transform="translate(${xTun - 12}, ${y - 12}) scale(1.0)">
-                        <path fill="${color}" d="M4 2h16a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm2 4v4h4V6H6zm6 0v4h4V6h-4zm-6 6v4h4v-4H6zm6 0v4h4v-4h-4z"/> 
-                    </g>
-                    <text x="${xTun}" y="${y + 40}" class="node-text" style="font-weight:bold; fill:${color}">TUN</text>
-                    <text x="${xTun}" y="${y + 57}" class="node-subtext">${this.escapeHtml(addrTun)}</text>
+                    <!-- === NODE 2: Phantun Local (Ghost) === -->
+                    <circle cx="${x2}" cy="${y}" r="24" class="node-circle" style="stroke:${color}; fill:#1e293b"></circle>
+                    <text x="${x2}" y="${y}" class="node-icon" style="font-size:22px">👻</text>
+                    <text x="${x2}" y="${y + 35}" class="node-text" style="fill:${color}">Phantun ${modeLabel}</text>
+                    
+                    <!-- === NODE 3: TCP Tunnel === -->
+                    <circle cx="${x3}" cy="${y}" r="22" class="node-circle internet"></circle>
+                    <text x="${x3}" y="${y}" class="node-icon" style="font-size:20px">🔗</text>
+                    <text x="${x3}" y="${y + 35}" class="node-text" style="fill:#94a3b8">TCP Tunnel</text>
+                    <text x="${x3}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addrTun)}</text>
 
-                    <!-- === REMOTE NODE === -->
-                    <circle cx="${xRemote}" cy="${y}" r="18" class="node-circle ${type}"></circle>
-                    <text x="${xRemote}" y="${y}" class="node-icon">☁️</text>
-                    <text x="${xRemote}" y="${y + 35}" class="node-text">${t('topo.remote')}</text>
-                    <text x="${xRemote}" y="${y + 52}" class="node-subtext">${this.escapeHtml(addrRemote)}</text>
+                    <!-- === NODE 4: Remote Node === -->
+                    <circle cx="${x4}" cy="${y}" r="22" class="node-circle ${type}"></circle>
+                    <text x="${x4}" y="${y}" class="node-icon" style="font-size:20px">☁️</text>
+                    <text x="${x4}" y="${y + 35}" class="node-text">${t('topo.remote')}</text>
+                    <text x="${x4}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addrRemote)}</text>
 
                     ${statusClass === 'active' ? `
-                    <circle r="4" class="pulse-packet active">
-                        <animateMotion dur="2.5s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                    <circle r="5" class="pulse-packet active">
+                        <animateMotion dur="3s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
-                    <circle r="4" class="pulse-packet active">
-                        <animateMotion dur="2.5s" begin="0.8s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                    <circle r="5" class="pulse-packet active">
+                        <animateMotion dur="3s" begin="1s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
-                    <circle r="4" class="pulse-packet active">
-                        <animateMotion dur="2.5s" begin="1.6s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                    <circle r="5" class="pulse-packet active">
+                        <animateMotion dur="3s" begin="2s" repeatCount="indefinite" path="${animPath}" keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
                     </circle>
                     ` : ''}
                 </svg>
