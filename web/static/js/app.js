@@ -943,13 +943,12 @@ const app = {
             // Strict Config Rule: "What you type is what you see"
             const statusClass = (isEnabled && isRunning) ? 'active' : (isEnabled ? 'stopped' : 'disabled');
 
-            // Coordinates (Percentage Interval)
-            const baseWidth = 800; // Intrinsic SVG Resolution
+            // Coordinates (Strict 233px Spacing)
             const y = 40;
-            const x1 = baseWidth * 0.08; // 8%  (was ~6%)
-            const x2 = baseWidth * 0.36; // 36% (was ~35%)
-            const x3 = baseWidth * 0.64; // 64% (was ~65%)
-            const x4 = baseWidth * 0.92; // 92% (was ~94%)
+            const x1 = 50;   // Node 1: Local App
+            const x2 = 283;  // Node 2: Phantun (TUN IP Here)
+            const x3 = 517;  // Node 3: Internet/Tunnel (Obfuscated Stream)
+            const x4 = 750;  // Node 4: Remote Endpoint
 
             // Colors & Direction
             const color = type === 'client' ? '#06b6d4' : '#f59e0b';
@@ -987,7 +986,7 @@ const app = {
                     <span>${t(`topo.${type}`)}: ${this.escapeHtml(item.alias || item.id.substring(0, 8))}</span>
                     <span class="status-dot ${statusClass === 'active' ? 'running' : 'stopped'}"></span>
                 </div>
-                <svg class="topo-svg" viewBox="0 0 ${baseWidth} 120" preserveAspectRatio="xMidYMid meet">
+                <svg class="topo-svg" viewBox="0 0 800 120" preserveAspectRatio="xMidYMid meet">
                     <!-- Layer 1: Fiber Connection -->
                     <path d="M${x1} ${y} L${x4} ${y}" class="fiber-line ${fiberClass}"></path>
 
