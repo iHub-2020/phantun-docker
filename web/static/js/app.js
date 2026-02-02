@@ -960,17 +960,24 @@ const app = {
             const fiberClass = `${statusClass} ${isServer ? 'reverse' : ''}`;
 
             // Data for labels (Strict Config)
-            // Node 1: Local App/Service
-            // For Server mode, local_addr is often empty (implied 0.0.0.0), table shows 0.0.0.0, so we must match.
-            const addr1 = (item.local_addr || '0.0.0.0') + ':' + item.local_port;
+            let addr1, addrRemote;
+
+            if (isServer) {
+                // Server Mode:
+                // Node 1 (Left): The UDP Service we forward TO (Forward To IP:Port)
+                addr1 = (item.remote_addr || '127.0.0.1') + ':' + item.remote_port;
+                // Node 4 (Right): The Remote TCP Client connecting to us (Any IP)
+                addrRemote = t('topo.any') || 'Any IP';
+            } else {
+                // Client Mode:
+                // Node 1 (Left): The Local UDP Socket we bind (Local IP:Port)
+                addr1 = (item.local_addr || '127.0.0.1') + ':' + item.local_port;
+                // Node 4 (Right): The Remote Phantun Server we connect TO (Server IP:Port)
+                addrRemote = (item.remote_addr || '...') + ':' + item.remote_port;
+            }
 
             // Node 2: Phantun (TUN IP)
-            // If empty, show '...' to indicate missing config, or maybe '-'
             const addrTun = item.tun_local || '...';
-
-            // Node 4: Remote Node
-            // Use configured remote address
-            const addrRemote = (item.remote_addr || '...') + ':' + item.remote_port;
 
             const iconLocal = isServer ? '📦' : '💻';
             const labelLocal = isServer ? (t('topo.service') || 'Service') : (t('topo.app') || 'App');
