@@ -134,19 +134,7 @@
         <!-- PAGE 2: Configuration -->
         <div id="configPage" class="page-content compact-view" style="display:none;">
             <!-- Safety Warning -->
-            <div class="safety-card">
-                <div class="safety-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" />
-                    </svg>
-                    <span>Critical Safety Information</span>
-                </div>
-                <ul>
-                    <li>Phantun uses <strong>FakeTCP</strong>. MTU must be reduced by <strong>12 bytes</strong>.</li>
-                    <li>Client requires <strong>MASQUERADE</strong> rules. Server requires <strong>DNAT</strong> rules.
-                    </li>
-                </ul>
-            </div>
+
 
             <!-- Global Settings -->
             <div class="card mb-4"
@@ -312,6 +300,23 @@
 
         <!-- PAGE 3: Status (Moved Here) -->
         <div id="statusPage" class="page-content" style="display:none;">
+            <!-- Safety Warning (Moved & Updated) -->
+            <div class="safety-card" style="margin-bottom: 20px; padding: 12px 20px;">
+                <div class="safety-title" style="margin-bottom: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" />
+                    </svg>
+                    <span data-i18n="Critical Safety Information">重要安全信息</span>
+                </div>
+                <ul style="margin-bottom: 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Phantun 创建 TUN 接口并使用 FakeTCP 混淆 UDP 流量。</li>
+                    <li>客户端模式需要 MASQUERADE iptables 规则 ( 自动添加 ) 。</li>
+                    <li>服务器模式需要 DNAT iptables 规则 ( 自动添加 ) 。</li>
+                    <li>无加密 - Phantun 专注于纯混淆以实现最大性能。</li>
+                    <li>MTU 开销仅为 12 字节 ( TCP 头 - UDP 头 ) 。</li>
+                </ul>
+            </div>
+
             <!-- System Diagnostics -->
             <div class="config-section">
                 <div class="section-header">
