@@ -960,11 +960,17 @@ const app = {
             const fiberClass = `${statusClass} ${isServer ? 'reverse' : ''}`;
 
             // Data for labels (Strict Config)
-            const addrLocal = item.local_addr ? `${item.local_addr}:${item.local_port}` : '...';
-            // TUN IP: Attached to Phantun Node (Node 2)
+            // Node 1: Local App/Service
+            // For Server mode, local_addr is often empty (implied 0.0.0.0), table shows 0.0.0.0, so we must match.
+            const addr1 = (item.local_addr || '0.0.0.0') + ':' + item.local_port;
+
+            // Node 2: Phantun (TUN IP)
+            // If empty, show '...' to indicate missing config, or maybe '-'
             const addrTun = item.tun_local || '...';
-            // Remote IP
-            const addrRemote = item.remote_addr ? `${item.remote_addr}:${item.remote_port}` : '...';
+
+            // Node 4: Remote Node
+            // Use configured remote address
+            const addrRemote = (item.remote_addr || '...') + ':' + item.remote_port;
 
             const iconLocal = isServer ? '📦' : '💻';
             const labelLocal = isServer ? (t('topo.service') || 'Service') : (t('topo.app') || 'App');
@@ -984,7 +990,7 @@ const app = {
                     <circle cx="${x1}" cy="${y}" r="22" class="node-circle ${type}"></circle>
                     <text x="${x1}" y="${y}" class="node-icon" style="font-size:20px">${iconLocal}</text>
                     <text x="${x1}" y="${y + 35}" class="node-text">${labelLocal}</text>
-                    <text x="${x1}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addrLocal)}</text>
+                    <text x="${x1}" y="${y + 55}" class="node-subtext" style="font-size:12px; font-weight:bold;">${this.escapeHtml(addr1)}</text>
 
                     <!-- === NODE 2: Phantun Daemon (TUN IP) === -->
                     <circle cx="${x2}" cy="${y}" r="24" class="node-circle" style="stroke:${color}; fill:#1e293b"></circle>
