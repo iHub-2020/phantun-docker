@@ -20,18 +20,21 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o pha
 FROM alpine:latest AS downloader
 
 RUN apk add --no-cache curl zip upx ca-certificates
+ARG PHANTUN_VERSION=latest
 ARG TARGETARCH
 
 WORKDIR /downloads
 
 # Download correct binary for architecture from iHub-2020
+# Download correct binary for architecture from iHub-2020
 # Use dynamic version resolution
-RUN if [ "${PHANTUN_VERSION}" = "latest" ]; then \
+RUN VERSION="${PHANTUN_VERSION:-latest}" && \
+    if [ "$VERSION" = "latest" ]; then \
     echo "Resolving latest version..."; \
     TAG=$(curl -s https://api.github.com/repos/iHub-2020/phantun/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'); \
     echo "Latest version resolved: ${TAG}"; \
     else \
-    TAG="v${PHANTUN_VERSION}"; \
+    TAG="v${VERSION}"; \
     echo "Using specified version: ${TAG}"; \
     fi && \
     case "${TARGETARCH}" in \
