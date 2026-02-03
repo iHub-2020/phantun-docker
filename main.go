@@ -167,7 +167,7 @@ func initAuth() {
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Allow public paths
-		if r.URL.Path == "/login" || r.URL.Path == "/api/login" || strings.HasPrefix(r.URL.Path, "/static/") {
+		if r.URL.Path == "/login" || r.URL.Path == "/api/login" || r.URL.Path == "/api/status" || strings.HasPrefix(r.URL.Path, "/static/") {
 			next.ServeHTTP(w, r)
 			return
 		}
