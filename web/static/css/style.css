@@ -797,9 +797,69 @@ input:checked+.slider:before {
     border-top: 1px solid var(--border);
 }
 
+
 .btn-group-left {
     display: flex;
     gap: 8px;
+}
+
+/* ========================================
+   2026-02-03 UI LAYOUT REFINEMENTS
+   ======================================== */
+
+/* Table Layout Fixes */
+.data-table {
+    table-layout: fixed !important;
+    width: 100% !important;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    vertical-align: middle !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+}
+
+/* Actions Column Alignment & Overflow */
+.data-table th:last-child,
+.data-table td:last-child {
+    overflow: visible !important;
+    text-align: left !important;
+    padding-left: 20px !important;
+}
+
+/* Button Styling in Tables */
+.data-table td:last-child .btn {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    margin: 0 4px 0 0 !important;
+    min-width: 80px !important;
+    font-weight: 700 !important;
+    padding: 6px 12px;
+    border: none !important;
+    font-size: 0.85rem !important;
+}
+
+/* Edit Button - Green Theme Override */
+.data-table td:last-child .btn-outline {
+    background-color: rgba(34, 197, 94, 0.15) !important;
+    color: #22c55e !important;
+    border: 1px solid transparent !important;
+}
+
+.data-table td:last-child .btn-outline:hover {
+    background-color: rgba(34, 197, 94, 0.25) !important;
+    color: #22c55e !important;
+}
+
+/* Delete Button - Ensure Bold */
+.data-table td:last-child .btn-danger {
+    font-weight: 700 !important;
 }
 
 /* Diagnostics Grid */
