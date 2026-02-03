@@ -291,9 +291,10 @@
 
 
             </div>
-            
+
             <!-- Separated Action Bar -->
-            <div class="card mt-4" style="padding: 20px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px;">
+            <div class="card mt-4"
+                style="padding: 20px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px;">
                 <div class="action-bar" style="margin-top: 0; padding-top: 0; border-top: none;">
                     <button class="btn btn-primary" onclick="app.saveAndApply()">Save & Apply</button>
                     <button class="btn btn-secondary" onclick="app.saveOnly()">Save Only</button>
@@ -421,7 +422,7 @@
     </main>
 
     <!-- Edit Modal (Tabs) -->
-    <div class="modal-overlay" id="editModal">
+    <div class="modal-overlay" id="editModal" style="display: none;">
         <div class="modal" style="max-width: 800px;">
             <div class="modal-header">
                 <span class="modal-title" id="editModalTitle">Edit Instance</span>
