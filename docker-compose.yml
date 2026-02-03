@@ -47,6 +47,8 @@ services:
       # Login Credentials (Default: admin/admin)
       - PHANTUN_USER=${PHANTUN_USER:-admin}
       - PHANTUN_PASSWORD=${PHANTUN_PASSWORD:-admin}
+      # Enable Phantun Kernel Logging
+      - RUST_LOG=${PHANTUN_LOG_LEVEL:-info}
 
     # --------------------------------------------------------------------------
     # Healthcheck
