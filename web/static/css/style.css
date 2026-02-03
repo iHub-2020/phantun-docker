@@ -991,15 +991,19 @@ input:checked+.slider:before {
     align-items: center;
     gap: 8px;
     font-weight: 600;
+    font-size: 14px;
+    /* Fix font size to 14px */
     color: #F59E0B;
     margin-bottom: 8px;
 }
 
 .safety-card ul {
     margin: 0;
-    padding-left: 24px;
+    padding-left: 20px;
+    font-size: 12px;
+    /* Content font size 12px */
     color: var(--text-secondary);
-    line-height: 1.8;
+    line-height: 1.5;
 }
 
 .safety-card ul li {
