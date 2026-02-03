@@ -21,19 +21,19 @@ FROM alpine:latest AS downloader
 
 RUN apk add --no-cache curl zip upx ca-certificates
 
-ARG PHANTUN_VERSION=0.6.0
+ARG PHANTUN_VERSION=1.0.2
 ARG TARGETARCH
 
 WORKDIR /downloads
-# Download correct binary for architecture
+# Download correct binary for architecture from iHub-2020
 RUN case "${TARGETARCH}" in \
-    "amd64") ARCH="x86_64-unknown-linux-musl" ;; \
-    "arm64") ARCH="aarch64-unknown-linux-musl" ;; \
+    "amd64") ARCH="x86_64" ;; \
+    "arm64") ARCH="aarch64" ;; \
     *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
     esac && \
-    curl -fL "https://github.com/dndx/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
+    curl -fL "https://github.com/iHub-2020/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
     unzip phantun.zip && \
-    # Compress binaries
+    # Unzipping likely produces single binaries or flat structure, ensure execution permissions
     chmod +x phantun_client phantun_server && \
     upx --best --lzma phantun_client phantun_server
 
