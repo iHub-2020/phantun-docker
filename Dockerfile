@@ -20,20 +20,29 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -ldflags="-w -s" -o pha
 FROM alpine:latest AS downloader
 
 RUN apk add --no-cache curl zip upx ca-certificates
-
-ARG PHANTUN_VERSION=1.0.2
 ARG TARGETARCH
 
 WORKDIR /downloads
+
 # Download correct binary for architecture from iHub-2020
-RUN case "${TARGETARCH}" in \
+# Use dynamic version resolution
+RUN if [ "${PHANTUN_VERSION}" = "latest" ]; then \
+    echo "Resolving latest version..."; \
+    TAG=$(curl -s https://api.github.com/repos/iHub-2020/phantun/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'); \
+    echo "Latest version resolved: ${TAG}"; \
+    else \
+    TAG="v${PHANTUN_VERSION}"; \
+    echo "Using specified version: ${TAG}"; \
+    fi && \
+    case "${TARGETARCH}" in \
     "amd64") ARCH="x86_64" ;; \
     "arm64") ARCH="aarch64" ;; \
     *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
     esac && \
-    curl -fL "https://github.com/iHub-2020/phantun/releases/download/v${PHANTUN_VERSION}/phantun_${ARCH}.zip" -o phantun.zip && \
+    DOWNLOAD_URL="https://github.com/iHub-2020/phantun/releases/download/${TAG}/phantun_${ARCH}.zip" && \
+    echo "Downloading from: ${DOWNLOAD_URL}" && \
+    curl -fL "${DOWNLOAD_URL}" -o phantun.zip && \
     unzip phantun.zip && \
-    # Unzipping likely produces single binaries or flat structure, ensure execution permissions
     chmod +x phantun_client phantun_server && \
     upx --best --lzma phantun_client phantun_server
 
