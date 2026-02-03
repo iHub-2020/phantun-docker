@@ -41,7 +41,7 @@ RUN case "${TARGETARCH}" in \
 FROM alpine:latest
 
 # Install runtime dependencies (only essential)
-RUN apk add --no-cache iptables ip6tables iproute2 ca-certificates
+RUN apk add --no-cache iptables ip6tables iproute2 ca-certificates curl
 
 WORKDIR /app
 
