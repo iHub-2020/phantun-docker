@@ -131,7 +131,7 @@ func (m *Manager) captureOutput(cmd *exec.Cmd, id string) {
 				content := string(buf[:n])
 				// Mirror to Console for Debugging (docker logs)
 				fmt.Printf("[%s] stdout: %s", id, content)
-				
+
 				m.BroadcastLog(LogMessage{
 					Timestamp: time.Now(),
 					ProcessID: id,
@@ -317,6 +317,11 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 
 	cmd := exec.Command("phantun_client", args...)
 
+	// Force Environment Variables for Logging
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "RUST_LOG=debug")
+	cmd.Env = append(cmd.Env, "RUST_BACKTRACE=1")
+
 	// Capture output
 	m.captureOutput(cmd, c.ID)
 
@@ -394,6 +399,11 @@ func (m *Manager) startServer(s config.ServerConfig) error {
 	}
 
 	cmd := exec.Command("phantun_server", args...)
+
+	// Force Environment Variables for Logging
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "RUST_LOG=debug")
+	cmd.Env = append(cmd.Env, "RUST_BACKTRACE=1")
 
 	// Capture output
 	m.captureOutput(cmd, s.ID)
