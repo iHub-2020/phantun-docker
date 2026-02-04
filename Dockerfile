@@ -29,25 +29,26 @@ WORKDIR /downloads
 # Download correct binary for architecture from iHub-2020
 # Use dynamic version resolution
 RUN VERSION="${PHANTUN_VERSION:-latest}" && \
-    if [ "$VERSION" = "latest" ]; then \
-    echo "Resolving latest version..."; \
-    TAG=$(curl -s https://api.github.com/repos/iHub-2020/phantun/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'); \
-    echo "Latest version resolved: ${TAG}"; \
-    else \
-    TAG="v${VERSION}"; \
-    echo "Using specified version: ${TAG}"; \
-    fi && \
-    case "${TARGETARCH}" in \
-    "amd64") ARCH="x86_64" ;; \
-    "arm64") ARCH="aarch64" ;; \
-    *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
-    esac && \
-    DOWNLOAD_URL="https://github.com/iHub-2020/phantun/releases/download/${TAG}/phantun_${ARCH}.zip" && \
-    echo "Downloading from: ${DOWNLOAD_URL}" && \
-    curl -fL "${DOWNLOAD_URL}" -o phantun.zip && \
-    unzip phantun.zip && \
-    chmod +x phantun_client phantun_server && \
-    upx --best --lzma phantun_client phantun_server
+  if [ "$VERSION" = "latest" ]; then \
+  echo "Resolving latest version..."; \
+  TAG=$(curl -s https://api.github.com/repos/dndx/phantun/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'); \
+  echo "Latest version resolved: ${TAG}"; \
+  else \
+  TAG="v${VERSION}"; \
+  echo "Using specified version: ${TAG}"; \
+  fi && \
+  case "${TARGETARCH}" in \
+  "amd64") ARCH="x86_64-unknown-linux-musl" ;; \
+  "arm64") ARCH="aarch64-unknown-linux-musl" ;; \
+  *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
+  esac && \
+  DOWNLOAD_URL="https://github.com/dndx/phantun/releases/download/${TAG}/phantun-${ARCH}.tar.gz" && \
+  echo "Downloading from: ${DOWNLOAD_URL}" && \
+  curl -fL "${DOWNLOAD_URL}" -o phantun.tar.gz && \
+  tar -xzf phantun.tar.gz && \
+  rm phantun.tar.gz && \
+  chmod +x phantun_client phantun_server && \
+  upx --best --lzma phantun_client phantun_server
 
 # Stage 3: Final Runtime Image
 FROM alpine:latest
