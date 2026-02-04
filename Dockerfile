@@ -69,6 +69,10 @@ RUN mkdir -p /etc/phantun
 ENV PHANTUN_CONFIG=/etc/phantun/config.json
 ENV PATH="/usr/local/bin:$PATH"
 
+# MANDATORY: Health Check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/api/status || exit 1
+
 # Expose Web UI port
 EXPOSE 8080
 

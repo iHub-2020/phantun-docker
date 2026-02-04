@@ -10,6 +10,11 @@ import (
 
 // SetupClient applies iptables rules for Client mode
 func SetupClient(c config.ClientConfig) error {
+	// SAFETY CHECK: Prevent high-jacking SSH
+	if c.LocalPort == "22" {
+		return fmt.Errorf("CRITICAL SECURITY ERROR: Cannot use port 22 for LocalPort. This would lock you out of the server!")
+	}
+
 	// iptables -t nat -A POSTROUTING -s {tun_peer}/32 -m comment --comment "phantun" -j MASQUERADE
 	return ensureRule("-t", "nat", "-A", "POSTROUTING",
 		"-s", c.TunPeer+"/32",
@@ -27,6 +32,11 @@ func CleanupClient(c config.ClientConfig) error {
 
 // SetupServer applies iptables rules for Server mode
 func SetupServer(s config.ServerConfig) error {
+	// SAFETY CHECK: Prevent high-jacking SSH
+	if s.LocalPort == "22" {
+		return fmt.Errorf("CRITICAL SECURITY ERROR: Cannot use port 22 for LocalPort. This would lock you out of the server!")
+	}
+
 	// 1. DNAT: TCP dport {local_port} -> {tun_peer}:{local_port}
 	err := ensureRule("-t", "nat", "-A", "PREROUTING",
 		"-p", "tcp", "--dport", s.LocalPort,

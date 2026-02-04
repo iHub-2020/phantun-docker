@@ -264,6 +264,9 @@ func (m *Manager) StartAll() error {
 
 func (m *Manager) startClient(c config.ClientConfig) error {
 	// 0. Apply Defaults
+	if c.LocalPort == "22" {
+		return fmt.Errorf("CRITICAL SECURITY ERROR: Cannot bind Phantun Client to Local Port 22! This would hijack the host SSH service and lock you out. Please choose a different port.")
+	}
 	if c.TunLocal == "" {
 		c.TunLocal = "192.168.200.1"
 	}
@@ -350,6 +353,9 @@ func (m *Manager) startClient(c config.ClientConfig) error {
 
 func (m *Manager) startServer(s config.ServerConfig) error {
 	// 0. Apply Defaults
+	if s.LocalPort == "22" {
+		return fmt.Errorf("CRITICAL SECURITY ERROR: Cannot bind Phantun Server to Local Port 22! This would hijack the host SSH service and lock you out. Please choose a different port.")
+	}
 	if s.TunLocal == "" {
 		s.TunLocal = "192.168.201.1"
 	}
